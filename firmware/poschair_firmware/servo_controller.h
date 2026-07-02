@@ -9,6 +9,7 @@ public:
   void update();                               // call every loop() — eases toward target
   uint8_t getCurrentAngle(int idx) const;
   void goNeutralAll();
+  void playStartupAnimation();
 
 private:
   Adafruit_PWMServoDriver _pwm;

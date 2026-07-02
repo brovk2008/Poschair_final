@@ -29,6 +29,7 @@ void setup() {
 
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   servos.begin();
+  servos.playStartupAnimation();
   bleManager.begin(&servos);
 
   Serial.println("Ready. All modules at neutral (pre-curve resting position).");
