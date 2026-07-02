@@ -21,24 +21,35 @@ export default function Hero() {
     { label: "Lower-Right (LR)", type: "red" }
   ]
 
-  // Calculate dynamic bending chord coordinates for the spring-steel simulator ribbon
-  const getBendingPath = () => {
-    const startX = 40;
-    const endX = 40;
+  // Left column paraspinal ribbon
+  const getLeftBendingPath = () => {
+    const startX = 32;
+    const endX = 32;
     const startY = 10;
     const endY = 270;
     
-    // Default spine straight position is X=40. Shift right on active vertebra.
-    const p1 = { x: activeSegment === 0 ? 68 : 40, y: 45 };
-    const p2 = { x: activeSegment === 1 ? 68 : 40, y: 90 };
-    const p3 = { x: activeSegment === 2 ? 68 : 40, y: 135 };
-    const p4 = { x: activeSegment === 3 ? 68 : 40, y: 180 };
-    const p5 = { x: activeSegment === 4 ? 68 : 40, y: 225 };
-    const p6 = { x: activeSegment === 5 ? 68 : 40, y: 255 };
+    const p1 = { x: activeSegment === 0 ? 14 : 32, y: 45 };   // UL
+    const p2 = { x: activeSegment === 2 ? 14 : 32, y: 135 };  // ML
+    const p3 = { x: activeSegment === 4 ? 14 : 32, y: 225 };  // LL
 
     return `M ${startX} ${startY} 
-            C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${p3.y} 
-            C ${p4.x} ${p4.y}, ${p5.x} ${p5.y}, ${p6.x} ${p6.y} 
+            C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${endY - 20} 
+            L ${endX} ${endY}`;
+  }
+
+  // Right column paraspinal ribbon
+  const getRightBendingPath = () => {
+    const startX = 68;
+    const endX = 68;
+    const startY = 10;
+    const endY = 270;
+    
+    const p1 = { x: activeSegment === 1 ? 86 : 68, y: 45 };   // UR
+    const p2 = { x: activeSegment === 3 ? 86 : 68, y: 135 };  // MR
+    const p3 = { x: activeSegment === 5 ? 86 : 68, y: 225 };  // LR
+
+    return `M ${startX} ${startY} 
+            C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${endY - 20} 
             L ${endX} ${endY}`;
   }
 
@@ -136,50 +147,75 @@ export default function Hero() {
             boxShadow: 'var(--shadow-inset-groove)',
             overflow: 'hidden'
           }}>
-            {/* SVG Spring-Steel Tension Ribbon */}
+            {/* SVG Paraspinal Tension Ribbons (Left & Right columns) */}
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+              {/* Left Column Ribbon */}
               <path 
-                d={getBendingPath()} 
+                d={getLeftBendingPath()} 
                 fill="none" 
                 stroke="var(--text-dim)" 
                 strokeWidth="4" 
                 strokeLinecap="round"
+                opacity="0.3"
                 style={{ transition: 'd 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
               />
               <path 
-                d={getBendingPath()} 
+                d={getLeftBendingPath()} 
                 fill="none" 
                 stroke="var(--accent-blue)" 
                 strokeWidth="1.5" 
                 strokeLinecap="round"
-                opacity="0.5"
+                opacity={activeSegment === 0 || activeSegment === 2 || activeSegment === 4 ? 0.6 : 0.1}
+                style={{ transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
+              />
+
+              {/* Right Column Ribbon */}
+              <path 
+                d={getRightBendingPath()} 
+                fill="none" 
+                stroke="var(--text-dim)" 
+                strokeWidth="4" 
+                strokeLinecap="round"
+                opacity="0.3"
                 style={{ transition: 'd 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
+              />
+              <path 
+                d={getRightBendingPath()} 
+                fill="none" 
+                stroke="var(--accent-blue)" 
+                strokeWidth="1.5" 
+                strokeLinecap="round"
+                opacity={activeSegment === 1 || activeSegment === 3 || activeSegment === 5 ? 0.6 : 0.1}
+                style={{ transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
               />
             </svg>
 
-            {/* 6 Vertebra Links */}
+            {/* 2×3 Grid Paraspinal Links */}
             <div style={{ 
               position: 'absolute', 
               top: '20px', 
               bottom: '20px', 
-              left: 0, 
-              right: 0, 
-              display: 'flex', 
-              flexDirection: 'column', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
+              left: '10px', 
+              right: '10px', 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              alignContent: 'space-between',
+              gap: '24px 10px',
               zIndex: 2,
               transformStyle: 'preserve-3d'
             }}>
               {segments.map((s, idx) => {
                 const active = activeSegment === idx;
                 const activeColor = s.type === "red" ? "var(--accent-red)" : "var(--accent-blue)";
+                const labels = ["UL", "UR", "ML", "MR", "LL", "LR"];
+                const isLeft = idx % 2 === 0;
+                // Move outward left or right upon actuation
+                const translateX = active ? (isLeft ? -10 : 10) : 0;
                 return (
                   <div 
                     key={idx}
                     style={{
-                      width: '48px',
-                      height: '22px',
+                      height: '24px',
                       borderRadius: '8px',
                       background: active ? activeColor : 'var(--surface)',
                       border: '1px solid rgba(255,255,255,0.03)',
@@ -187,7 +223,7 @@ export default function Hero() {
                         ? `0 4px 12px ${activeColor}, inset 2px 2px 4px rgba(255,255,255,0.25), inset -2px -2px 4px rgba(0,0,0,0.5)` 
                         : 'var(--shadow-sm)',
                       transform: active 
-                        ? 'translateZ(20px) translateX(28px) rotateY(-15deg)' 
+                        ? `translateZ(20px) translateX(${translateX}px) rotateY(${isLeft ? -15 : 15}deg)` 
                         : 'translateZ(0) translateX(0) rotateY(0)',
                       transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                       display: 'flex',
@@ -198,7 +234,7 @@ export default function Hero() {
                       color: active ? '#ffffff' : 'var(--text-muted)'
                     }}
                   >
-                    L{idx + 1}
+                    {labels[idx]}
                   </div>
                 )
               })}
