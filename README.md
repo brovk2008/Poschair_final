@@ -1,66 +1,42 @@
-# PosChair — AI Posture-Correcting Spine Corrector
+# PosChair — AI Posture-Correcting Chair Attachment
 
 [![Latest Release](https://img.shields.io/github/v/release/brovk2008/Poschair_final?label=download&color=5c8aff)](https://github.com/brovk2008/Poschair_final/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
 [![Website](https://img.shields.io/badge/website-poschair--comfort.vercel.app-gray)](https://poschair-comfort.vercel.app)
 
-PosChair is an AI-powered posture-correcting chair attachment that bridges a **digital spine** (pose-tracking camera analysis) and a **mechanical spine** (6× servo-driven spring-steel modules).
+PosChair is an open-source, closed-loop posture correction system. It tracks your spine in real time using a standard webcam and automatically pushes corrective adjustments to a 6-segment mechanical spine on your chair via Bluetooth Low Energy (BLE).
 
 ---
 
-## 1. System Topology
+## ⚡ System Flow
 
 ```
-Camera (browser) → MediaPipe Pose → Posture Analyzer → Decision Engine
-        → BLE Manager → [BLE] → ESP32-C3 → PCA9685 → 6× Servos
-        → Cable → Spring Steel Strip → Foam → User's Back
-        → Camera re-checks posture (closed loop)
+Camera (browser) ──[MediaPipe AI]──> Posture Analyser ──[BLE]──> ESP32-C3 ──> PCA9685 ──> 6× Spring-Steel Bow Actuators
 ```
 
 ---
 
-## 2. Directory Structure
+## 🚀 30-Second Quick Start
 
-- **`firmware/`**: Arduino IDE project codes.
-  - **`poschair_firmware/`**: NimBLE bluetooth services and PCA9685 control sketch loops.
-  - **`poschair_servo_test/`**: Diagnostic bring-up sweeping sketch (without BLE).
-- **`app/`**: Docker-composed fullstack application.
-  - **`backend/`**: Python FastAPI routers communicating with a PostgreSQL database.
-  - **`frontend/`**: Vite + React single-page cybernetic dashboard incorporating client-side WebAssembly MediaPipe tracking.
-- **`docs/`**: Detailed hardware wiring pinout mappings and custom binary BLE protocols.
+### 1. Assemble Hardware
+Connect the **ESP32-C3 Mini** via I2C to the **PCA9685 driver**. Connect **6× mechanical bow servos** to channels 0-5.
+*(See detailed wiring in [hardware_wiring.md](file:///c:/Users/techp/Downloads/more%20projects/poschair_final/docs/hardware_wiring.md))*
 
----
+### 2. Flash Firmware
+Open `firmware/poschair_firmware/poschair_firmware.ino` in the **Arduino IDE 2.x**. Connect the ESP32-C3 and click **Upload**.
+*(Target Board: ESP32C3 Dev Module · Enable "USB CDC On Boot")*
 
-## 3. Running & Execution Guidelines
-
-### 3.1 Start the Web Application (Docker Compose)
-From the root of the `./app` directory, run:
-
+### 3. Run Dashboard App
+From the `app/` folder, spin up the Docker-composed local dashboard:
 ```bash
 docker-compose up --build
 ```
-- **Frontend Panel**: [http://localhost:5173](http://localhost:5173)
-- **FastAPI backend docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-
-### 3.2 Compiling & Uploading Firmware (Arduino IDE)
-1. Install **Arduino IDE 2.x**.
-2. Navigate to **File → Preferences → Additional Boards Manager URLs** and add:
-   `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
-3. Go to **Tools → Board → Boards Manager**, search "esp32", and install **"esp32 by Espressif Systems"** v3.x.
-4. Select **Tools → Board → ESP32 → ESP32C3 Dev Module**.
-5. Configure board properties:
-   - **USB CDC On Boot**: Enabled
-   - **Flash Size**: 4MB
-   - **Partition Scheme**: Default 4MB with spiffs
-   - **Upload Speed**: 921600
-6. Search and install dependencies in the **Library Manager**:
-   - **NimBLE-Arduino** by h2zero
-   - **Adafruit PWM Servo Driver Library** by Adafruit
-7. Open `firmware/poschair_firmware/poschair_firmware.ino`, select the serial COM port under **Tools → Port**, and click **Upload**.
+Open **[http://localhost:5173](http://localhost:5173)** in Chrome or Edge, click **Connect Chair**, and sit down.
 
 ---
 
-## 4. Operational Troubleshooting
+## 🛠️ Diagnostics & Troubleshooting
 
-- **Brownout Resets**: If the ESP32 resets repeatedly when the servos begin moving, it confirms the battery/external power is insufficient or is wired incorrectly. Ensure the PCA9685 green power terminal is connected directly to a separate 5V battery block, sharing a common ground pin with the ESP32.
-- **Web Bluetooth Pairing**: Make sure you use a compatible browser (Desktop/Android Chrome/Edge). iOS Safari does not support the Web Bluetooth API.
+* **Brownout Resets**: If the ESP32 resets when the servos begin moving, your power supply is insufficient. Ensure the servos are powered by a separate, dedicated **5V/3A+ external power supply** (not the USB line).
+* **Web Bluetooth API**: Make sure to use Chrome or Edge. iOS Safari and Firefox do not support Web Bluetooth.
+* **Diagnostics Sweep**: Flash [poschair_servo_test.ino](file:///c:/Users/techp/Downloads/more%20projects/poschair_final/firmware/poschair_servo_test/poschair_servo_test.ino) to verify physical servo wiring and ranges before running the main closed-loop software.
