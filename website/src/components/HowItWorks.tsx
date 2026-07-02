@@ -27,7 +27,7 @@ const steps = [
     ),
     step:  '02',
     title: 'Decision engine maps to angles',
-    desc:  'Spine deviation is converted to six servo target angles based on mode (office, gaming, study, relax).',
+    desc:  'Spine forward and lateral deviations are mapped to 2×3 grid targets based on preset correction modes.',
   },
   {
     icon: (
@@ -48,7 +48,7 @@ const steps = [
     ),
     step:  '04',
     title: 'Servos correct your posture',
-    desc:  'PCA9685 drives six servos across thoracic, lumbar, and pelvis zones. Eased at 50 Hz — no jerking.',
+    desc:  'The 2×3 grid actuates left and right columns independently. Leaning right triggers left-side tension to re-centre you.',
   },
 ]
 

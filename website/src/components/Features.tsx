@@ -2,8 +2,8 @@ import React from 'react'
 
 const features = [
   {
-    title: "6-Level Mechanical Spine",
-    desc: "A vertical chain of six servo-driven spring-steel 'bow' modules adjusts dynamically to your thoracic, lumbar, and pelvis zones."
+    title: "2×3 Paraspinal Actuator Grid",
+    desc: "Two independent columns of three servo-driven spring-steel modules adjust dynamically to target paraspinal muscle lines and correct lateral asymmetry."
   },
   {
     title: "On-device AI Pose Analysis",
