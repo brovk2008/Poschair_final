@@ -31,30 +31,30 @@ export default function Hero() {
     }}>
       {/* Left side: Heading content */}
       <div style={{ textAlign: 'left' }}>
-        {/* Soft capsule badge */}
+        {/* Soft capsule badge (Monochromatic) */}
         <div style={{
           display:        'inline-flex',
           alignItems:     'center',
           gap:             8,
           padding:        '8px 16px',
-          background:     '#161729',
-          boxShadow:      'inset 2px 2px 4px rgba(255,255,255,0.04), inset -2px -2px 4px rgba(0,0,0,0.5)',
+          background:     'var(--surface)',
+          boxShadow:      'inset 2px 2px 4px rgba(255,255,255,0.03), inset -2px -2px 4px rgba(0,0,0,0.8)',
           borderRadius:    30,
           fontSize:        '11px',
-          fontWeight:      700,
+          fontWeight:      800,
           letterSpacing:  '0.06em',
           textTransform:  'uppercase',
-          color:          '#7aa3ff',
+          color:          'var(--text-secondary)',
           marginBottom:    32,
         }}>
           <span style={{ 
             width: '6px', 
             height: '6px', 
-            background: '#22c55e', 
+            background: '#ffffff', 
             borderRadius: '50%',
-            boxShadow: '0 0 8px #22c55e'
+            boxShadow: '0 0 8px rgba(255,255,255,0.6)'
           }} />
-          Open Source project · MIT License
+          Open Source Project · MIT License
         </div>
 
         <h1 style={{
@@ -66,7 +66,7 @@ export default function Hero() {
           color:       'var(--text-primary)',
         }}>
           Your chair corrects<br />
-          <span style={{ background: 'linear-gradient(135deg, #4f8cff, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>
             your posture for you.
           </span>
         </h1>
@@ -89,24 +89,24 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Right side: Cybernetic Spine Clay Dashboard Mockup */}
+      {/* Right side: Cybernetic Spine Matte-Black Dashboard Mockup */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div className="clay-card" style={{ 
           width: '380px', 
-          background: 'var(--surface-2)',
+          background: 'var(--surface)',
           padding: '36px', 
-          borderRadius: '36px',
+          borderRadius: '32px',
           position: 'relative'
         }}>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800 }}>Spine Actuators</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Spine Actuators</span>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>Live Feedback</h3>
             </div>
             <div style={{ 
-              background: '#22c55e', 
-              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.3), 0 0 16px rgba(34,197,94,0.4)',
+              background: '#ffffff', 
+              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.3)',
               width: '32px', 
               height: '32px', 
               borderRadius: '50%',
@@ -114,7 +114,7 @@ export default function Hero() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </div>
 
@@ -127,24 +127,24 @@ export default function Hero() {
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'space-between',
-                  background: active ? 'rgba(79, 140, 255, 0.04)' : 'transparent',
+                  background: active ? 'var(--surface-2)' : 'transparent',
                   padding: '8px 12px',
-                  borderRadius: '16px',
-                  border: active ? '1px solid rgba(79, 140, 255, 0.15)' : '1px solid transparent',
+                  borderRadius: '14px',
+                  border: active ? '1px solid rgba(255, 255, 255, 0.02)' : '1px solid transparent',
                   transition: 'all 0.3s ease'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{s.label}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>PCA9685 Channel {idx}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Channel {idx}</span>
                   </div>
 
                   {/* Tactile segment bar */}
                   <div style={{ 
                     width: '90px', 
-                    height: '14px', 
-                    background: '#0a0a14', 
+                    height: '12px', 
+                    background: '#0a0a0c', 
                     borderRadius: '8px', 
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.8), 1px 1px 2px rgba(255,255,255,0.05)',
+                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.8), 1px 1px 2px rgba(255,255,255,0.02)',
                     position: 'relative',
                     overflow: 'hidden'
                   }}>
@@ -154,9 +154,9 @@ export default function Hero() {
                       left: 0,
                       height: '100%',
                       width: active ? '75%' : '15%',
-                      background: active ? 'linear-gradient(90deg, #4f8cff, #a855f7)' : '#334155',
+                      background: active ? '#ffffff' : '#334155',
                       borderRadius: '8px',
-                      boxShadow: active ? 'inset 1px 1px 2px rgba(255,255,255,0.5), 0 0 10px rgba(79,140,255,0.4)' : 'none',
+                      boxShadow: active ? 'inset 1px 1px 2px rgba(255,255,255,0.5)' : 'none',
                       transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                     }} />
                   </div>
@@ -174,7 +174,7 @@ export default function Hero() {
             background: 'var(--surface-2)',
             boxShadow: 'var(--clay-shadow)',
             border: '1px solid var(--border)',
-            borderRadius: '20px',
+            borderRadius: '16px',
             padding: '8px 24px',
             display: 'flex',
             alignItems: 'center',
@@ -184,7 +184,7 @@ export default function Hero() {
             color: 'var(--text-primary)',
             whiteSpace: 'nowrap'
           }}>
-            <span style={{ width: '8px', height: '8px', background: '#a855f7', borderRadius: '50%', boxShadow: '0 0 8px #a855f7' }} />
+            <span style={{ width: '8px', height: '8px', background: '#ffffff', borderRadius: '50%', boxShadow: '0 0 8px rgba(255,255,255,0.6)' }} />
             Active Mode: Office (1.0x)
           </div>
         </div>

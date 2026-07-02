@@ -20,7 +20,7 @@ const steps = [
         <line x1="9"  y1="20" x2="9"  y2="23"/>
         <line x1="15" y1="20" x2="15" y2="23"/>
         <line x1="20" y1="9"  x2="23" y2="9"/>
-        <line x1="20" y1="14" x2="23" y2="14"/>
+        <line x1="20" y1="14"  x2="23" y2="14"/>
         <line x1="1"  y1="9"  x2="4"  y2="9"/>
         <line x1="1"  y1="14" x2="4"  y2="14"/>
       </svg>
@@ -56,27 +56,27 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" style={{ padding: '100px 0 80px' }}>
       <h2 className="section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--accent)' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--text-secondary)' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         How it works
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
         {steps.map(s => (
           <div key={s.step} className="clay-card">
-            <div style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 800, marginBottom: '20px', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 800, marginBottom: '20px', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
               STEP {s.step}
             </div>
             
-            {/* Clay-style icon background */}
+            {/* Clay-style icon background (Monochromatic) */}
             <div style={{ 
               background: 'var(--surface-2)',
-              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.04), inset -2px -2px 4px rgba(0,0,0,0.5)',
+              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.03), inset -2px -2px 4px rgba(0,0,0,0.8)',
               width: '48px',
               height: '48px',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--text-primary)',
+              color: '#ffffff',
               marginBottom: '24px'
             }}>
               {s.icon}
