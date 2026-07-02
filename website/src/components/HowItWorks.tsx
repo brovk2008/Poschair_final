@@ -56,28 +56,29 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" style={{ padding: '100px 0 80px' }}>
       <h2 className="section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--brand)' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--text-secondary)' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         How it works
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
         {steps.map(s => (
           <div key={s.step} className="clay-card">
-            <div style={{ color: 'var(--brand)', fontSize: '11px', fontWeight: 800, marginBottom: '20px', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 800, marginBottom: '20px', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
               STEP {s.step}
             </div>
             
             {/* Clay icon background */}
             <div style={{ 
-              background: 'var(--surface-medium)',
-              boxShadow: 'var(--shadow-sm)',
+              background: 'var(--surface-2)',
+              boxShadow: 'var(--shadow-btn)',
               width: '48px',
               height: '48px',
               borderRadius: 'var(--radius-sm)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--brand)',
-              marginBottom: '24px'
+              color: 'var(--text-primary)',
+              marginBottom: '24px',
+              border: '1px solid rgba(255,255,255,0.01)'
             }}>
               {s.icon}
             </div>

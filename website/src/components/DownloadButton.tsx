@@ -31,12 +31,14 @@ export default function DownloadButton() {
       href={exeAsset?.browser_download_url ?? `https://github.com/${REPO}/releases`}
       target="_blank"
       rel="noopener noreferrer"
-      className="clay-btn clay-btn-brand"
+      className="clay-btn"
       style={{
+        background: 'var(--accent-blue)',
         padding: '16px 36px',
-        borderRadius: '999px',
+        borderRadius: '14px',
         fontSize: '15px',
         textDecoration: 'none',
+        border: '1px solid rgba(255, 255, 255, 0.02)'
       }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: '10px' }}>
