@@ -1,68 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* LIGHT MODE (Cream/Warm Clay) */
-  --bg: #FAF6F0; /* neutral-primary-soft */
-  --surface: #FAF6F0; /* neutral-primary */
-  --surface-secondary: #F3EDE4; /* neutral-secondary-soft */
-  --surface-medium: #F3EDE4; /* neutral-secondary-medium */
-  --border: #E0D7C9; /* border-default */
-  --text-primary: #2C2215; /* heading */
-  --text-secondary: #6B5C4A; /* body */
-  --text-muted: #87786A; /* body-subtle */
+  /* STEALTH DARK THEME — FORCED (Matte Charcoal & Graphite Grey) */
+  --bg:           #08080a;
+  --surface:      #121214;
+  --surface-secondary: #121214;
+  --surface-medium:    #1a1a1e;
+  --border:       rgba(255, 255, 255, 0.02);
+  --border-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted:   #52525b;
+  --text-dim:     #3f3f46;
   
-  --brand: #1C398E; /* brand blue */
-  --danger: #C70036; /* danger red */
+  /* Brand Blue & Danger Red accents */
+  --brand:        #3b82f6; 
+  --danger:       #ef4444; 
   
-  --radius-base: 36px;
+  --radius-base:  36px;
   --radius-default: 999px;
+  --radius-sm:    12px;
   
+  /* Stealth Claymorphism shadows */
   --shadow-sm: 
-    4px 8px 16px rgba(0,0,0,0.06), 
-    inset -3px -4px 8px rgba(0,0,0,0.04), 
-    inset 3px 4px 8px rgba(255,255,255,0.7);
+    4px 8px 16px rgba(0,0,0,0.25), 
+    inset -3px -4px 8px rgba(0,0,0,0.5), 
+    inset 3px 4px 8px rgba(255,255,255,0.04);
     
   --shadow-md: 
-    6px 12px 24px rgba(0,0,0,0.08), 
-    inset -4px -6px 10px rgba(0,0,0,0.04), 
-    inset 4px 6px 10px rgba(255,255,255,0.65);
+    6px 12px 24px rgba(0,0,0,0.3), 
+    inset -4px -6px 10px rgba(0,0,0,0.5), 
+    inset 4px 6px 10px rgba(255,255,255,0.04);
     
   --shadow-lg: 
-    8px 16px 32px rgba(0,0,0,0.1), 
-    inset -5px -8px 14px rgba(0,0,0,0.04), 
-    inset 5px 8px 14px rgba(255,255,255,0.55);
-}
+    8px 16px 32px rgba(0,0,0,0.35), 
+    inset -5px -8px 14px rgba(0,0,0,0.5), 
+    inset 5px 8px 14px rgba(255,255,255,0.04);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* DARK MODE (Stealth Matte Black/Grey) */
-    --bg: #0E0B08; /* neutral-primary */
-    --surface: #1B1714; /* neutral-primary-soft */
-    --surface-secondary: #1B1714;
-    --surface-medium: #272118; /* neutral-secondary-medium */
-    --border: #2C2215; /* border-default */
-    --text-primary: #FAF6F0; /* heading */
-    --text-secondary: #A99880; /* body */
-    --text-muted: #6B5C4A; /* fg-disabled */
-    
-    --brand: #4D72C7; /* brand blue */
-    --danger: #ef4444; /* danger red */
-    
-    --shadow-sm: 
-      4px 8px 16px rgba(0,0,0,0.25), 
-      inset -3px -4px 8px rgba(0,0,0,0.5), 
-      inset 3px 4px 8px rgba(255,255,255,0.04);
-      
-    --shadow-md: 
-      6px 12px 24px rgba(0,0,0,0.3), 
-      inset -4px -6px 10px rgba(0,0,0,0.5), 
-      inset 4px 6px 10px rgba(255,255,255,0.04);
-      
-    --shadow-lg: 
-      8px 16px 32px rgba(0,0,0,0.35), 
-      inset -5px -8px 14px rgba(0,0,0,0.5), 
-      inset 5px 8px 14px rgba(255,255,255,0.04);
-  }
+  --clay-btn-stealth:
+    inset 3px 3px 6px rgba(255, 255, 255, 0.04),
+    inset -5px -5px 10px rgba(0, 0, 0, 0.8),
+    0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -74,7 +52,7 @@
 html {
   background: var(--bg);
   color:      var(--text-primary);
-  font-family: 'Poppins', 'Outfit', system-ui, sans-serif;
+  font-family: 'Poppins', 'Outfit', system-ui, -apple-system, sans-serif;
   font-size:   16px;
   line-height: 1.5;
   scroll-behavior: smooth;
