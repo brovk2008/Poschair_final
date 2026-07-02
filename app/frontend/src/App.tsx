@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Bluetooth, RefreshCw, Activity, Sliders } from 'lucide-react';
+import { Bluetooth, RefreshCw, Activity, Sliders, Eye, Cpu } from 'lucide-react';
 import { createBLEManager, StatusData } from './bleManager';
 import { LandmarkList } from './poseDetector';
 import { analyzePose, CalibrationBaseline, PostureData } from './postureAnalyzer';
@@ -26,6 +26,9 @@ export default function App() {
   const [userId, setUserId] = useState<number | null>(1);
   const [mode, setMode] = useState<Mode>('office');
   
+  // Operational tracking mode: 'cv' (Computer Vision only) vs 'both' (CV + hardware BLE write control)
+  const [trackingMode, setTrackingMode] = useState<'cv' | 'both'>('both');
+
   // BLE states
   const [bleConnected, setBleConnected] = useState(false);
   const [isBleConnecting, setIsBleConnecting] = useState(false);
@@ -104,11 +107,11 @@ export default function App() {
     const angles = computeTargetAngles(posture, mode);
     setTargetAngles(angles);
 
-    // Throttled BLE send
+    // Throttled BLE send (Only transmits to ESP32 if trackingMode is 'both')
     const now = Date.now();
     if (now - lastSendTime.current >= 100) {
       lastSendTime.current = now;
-      if (bleConnected) {
+      if (bleConnected && trackingMode === 'both') {
         bleManager.sendAngles(angles);
       }
     }
@@ -177,7 +180,7 @@ export default function App() {
     setSessionStartTime(null);
     setSessionScoreHistory([]);
     setTargetAngles([0, 0, 0, 0, 0, 0]);
-    if (bleConnected) {
+    if (bleConnected && trackingMode === 'both') {
       bleManager.sendAngles([0, 0, 0, 0, 0, 0]);
     }
   };
@@ -186,7 +189,7 @@ export default function App() {
     const next = [...targetAngles];
     next[idx] = val;
     setTargetAngles(next);
-    if (bleConnected) {
+    if (bleConnected && trackingMode === 'both') {
       bleManager.sendAngles(next);
     }
   };
@@ -196,7 +199,7 @@ export default function App() {
       {/* Header bar */}
       <header className="glass-panel" style={{ borderLeft: 'none', borderRight: 'none', borderTop: 'none', borderRadius: '0', padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-violet))', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '20px', color: 'var(--bg-dark)' }}>
+          <div style={{ background: 'var(--accent-blue-dark)', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '20px', color: '#ffffff', border: '1px solid rgba(255,255,255,0.03)' }}>
             P
           </div>
           <div>
@@ -263,7 +266,7 @@ export default function App() {
             {sessionStartTime && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={16} className="pulsing-glow" style={{ color: 'var(--accent-cyan)' }} />
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Session Clock Activeing</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Session Clock Active</span>
               </div>
             )}
           </div>
@@ -288,10 +291,60 @@ export default function App() {
             onChange={(m) => setMode(m)} 
           />
 
+          {/* Settings: Operational Mode (CV only vs Both) */}
+          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
+              <Cpu size={18} style={{ color: 'var(--accent-cyan)' }} />
+              Integration Settings
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button 
+                onClick={() => setTrackingMode('cv')}
+                className="btn"
+                style={{
+                  padding: '12px 10px',
+                  borderRadius: '12px',
+                  background: trackingMode === 'cv' ? 'var(--accent-blue-dark)' : 'var(--bg-dark)',
+                  border: trackingMode === 'cv' ? '1px solid rgba(255,255,255,0.05)' : '1px solid var(--color-border)',
+                  color: 'var(--text-primary)',
+                  boxShadow: trackingMode === 'cv' ? 'var(--btn-shadow-pressed)' : 'var(--btn-shadow)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
+                <Eye size={14} />
+                <span>Local CV Only</span>
+              </button>
+
+              <button 
+                onClick={() => setTrackingMode('both')}
+                className="btn"
+                style={{
+                  padding: '12px 10px',
+                  borderRadius: '12px',
+                  background: trackingMode === 'both' ? 'var(--accent-blue-dark)' : 'var(--bg-dark)',
+                  border: trackingMode === 'both' ? '1px solid rgba(255,255,255,0.05)' : '1px solid var(--color-border)',
+                  color: 'var(--text-primary)',
+                  boxShadow: trackingMode === 'both' ? 'var(--btn-shadow-pressed)' : 'var(--btn-shadow)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
+                <Cpu size={14} />
+                <span>Active BLE Loop</span>
+              </button>
+            </div>
+          </div>
+
           {/* Manual controls override when tracking is off */}
           {!isTracking && (
             <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
                 <Sliders size={18} style={{ color: 'var(--accent-cyan)' }} />
                 Manual Servos Command
               </h3>

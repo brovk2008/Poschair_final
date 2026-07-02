@@ -1,30 +1,56 @@
-/* PosChair Modern Glassmorphic Cyber Theme */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+
 :root {
-  --font-display: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', 'Outfit', system-ui, sans-serif;
+  --font-sans: 'Poppins', 'Outfit', system-ui, sans-serif;
 
-  /* Theme Color Palette */
-  --bg-dark: hsl(222, 47%, 7%);
-  --bg-card: hsla(222, 47%, 12%, 0.7);
-  --bg-card-hover: hsla(222, 47%, 16%, 0.8);
+  /* Stealth Dark Neumorphic-Claymorphic Palette */
+  --bg-dark:       #0a0a0c;
+  --bg-card:       #121215;
+  --bg-card-hover: #18181c;
   
-  --color-border: hsla(217, 30%, 20%, 0.6);
-  --color-border-glow: hsla(190, 100%, 50%, 0.2);
+  --color-border:      rgba(255, 255, 255, 0.01);
+  --color-border-glow: rgba(255, 255, 255, 0.03);
   
-  --accent-cyan: hsl(190, 100%, 50%);
-  --accent-violet: hsl(263, 100%, 65%);
-  --accent-violet-dark: hsl(263, 70%, 45%);
-  --accent-green: hsl(142, 70%, 50%);
-  --accent-orange: hsl(32, 95%, 55%);
-  --accent-red: hsl(350, 85%, 60%);
+  --accent-cyan:   #3b82f6; /* Accent Blue (General) */
+  --accent-violet: #ef4444; /* Accent Red (Warning) */
+  --accent-green:  #10b981; /* Success Green (BLE connected / Charge) */
+  --accent-orange: #f59e0b; /* Alert Orange */
+  --accent-red:    #ef4444; /* Danger Red */
 
-  --text-primary: hsl(210, 40%, 98%);
-  --text-secondary: hsl(215, 20%, 65%);
-  --text-muted: hsl(215, 15%, 45%);
-  
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  --glass-blur: blur(12px);
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --text-primary:   #f4f4f5;
+  --text-secondary: #9ea2af;
+  --text-muted:     #4e515f;
+  --text-dim:       #353742;
+
+  --accent-blue-dark: #182a4d;
+  --accent-red-dark:  #4c1218;
+
+  /* Soft Neumorphic-Claymorphic elevations */
+  --glass-shadow: 
+    12px 12px 24px rgba(0, 0, 0, 0.7), 
+    -12px -12px 24px rgba(255, 255, 255, 0.015),
+    inset 3px 3px 6px rgba(255, 255, 255, 0.03), 
+    inset -5px -5px 10px rgba(0, 0, 0, 0.85);
+
+  --btn-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.7), 
+    -6px -6px 12px rgba(255, 255, 255, 0.012),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.04), 
+    inset -4px -4px 8px rgba(0, 0, 0, 0.85);
+
+  --btn-shadow-hover:
+    8px 8px 16px rgba(0, 0, 0, 0.8), 
+    -8px -8px 16px rgba(255, 255, 255, 0.02),
+    inset 3px 3px 6px rgba(255, 255, 255, 0.05), 
+    inset -5px -5px 10px rgba(0, 0, 0, 0.9);
+
+  --btn-shadow-pressed:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.95),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.01);
+
+  --glass-blur: blur(16px);
+  --transition-smooth: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 * {
@@ -40,38 +66,32 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Background Glowing Orbs */
+/* Background grid layout glow overlays */
 body::before, body::after {
   content: "";
   position: absolute;
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   border-radius: 50%;
   z-index: -1;
-  opacity: 0.15;
-  filter: blur(80px);
+  opacity: 0.08;
+  filter: blur(100px);
   pointer-events: none;
 }
 
 body::before {
   top: 10%;
-  left: 10%;
+  left: 5%;
   background: var(--accent-cyan);
-  animation: floatOrb 12s infinite alternate ease-in-out;
 }
 
 body::after {
   bottom: 10%;
-  right: 10%;
+  right: 5%;
   background: var(--accent-violet);
-  animation: floatOrb 18s infinite alternate-reverse ease-in-out;
-}
-
-@keyframes floatOrb {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(50px, 30px) scale(1.2); }
 }
 
 h1, h2, h3, h4, h5 {
@@ -80,84 +100,94 @@ h1, h2, h3, h4, h5 {
   letter-spacing: -0.02em;
 }
 
-/* Glassmorphic Components */
+/* Extruded Glass Panel */
 .glass-panel {
   background: var(--bg-card);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 24px;
   box-shadow: var(--glass-shadow);
   transition: var(--transition-smooth);
 }
 
 .glass-panel:hover {
-  border-color: hsla(217, 30%, 30%, 0.8);
+  border-color: var(--color-border-glow);
+  transform: translateY(-2px);
 }
 
 .glass-panel-glow {
   border-color: var(--color-border-glow);
-  box-shadow: 0 0 20px 0 hsla(190, 100%, 50%, 0.1), var(--glass-shadow);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.1), var(--glass-shadow);
 }
 
-/* Dynamic Buttons */
+/* Machined Neumorphic buttons */
 .btn {
   font-family: var(--font-display);
   font-weight: 600;
   padding: 12px 24px;
-  border-radius: 10px;
-  border: none;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  transition: var(--transition-smooth);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  user-select: none;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-  color: var(--bg-dark);
-  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+  background: var(--accent-blue-dark);
+  color: var(--text-primary);
+  box-shadow: var(--btn-shadow);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+  transform: scale(1.02);
+  box-shadow: var(--btn-shadow-hover);
+  background: #1f2f54;
 }
 
 .btn-primary:active {
-  transform: translateY(0);
+  transform: scale(0.98);
+  box-shadow: var(--btn-shadow-pressed);
+  background: #121e36;
 }
 
 .btn-secondary {
-  background: hsla(222, 47%, 20%, 0.4);
+  background: var(--bg-card);
   color: var(--text-primary);
-  border: 1px solid var(--color-border);
+  box-shadow: var(--btn-shadow);
 }
 
 .btn-secondary:hover {
-  background: hsla(222, 47%, 25%, 0.6);
-  border-color: hsla(217, 30%, 40%, 0.8);
-  transform: translateY(-1px);
+  background: var(--bg-card-hover);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+  box-shadow: var(--btn-shadow-pressed);
 }
 
 .btn-success {
   background: var(--accent-green);
-  color: var(--bg-dark);
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--btn-shadow);
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+  transform: scale(1.02);
+  box-shadow: var(--btn-shadow-hover);
 }
 
 .btn-disabled {
-  background: hsla(222, 47%, 15%, 0.5);
+  background: var(--text-dim);
   color: var(--text-muted);
   border: 1px solid var(--color-border);
   cursor: not-allowed;
@@ -165,7 +195,7 @@ h1, h2, h3, h4, h5 {
   transform: none !important;
 }
 
-/* Layout utilities */
+/* Layout columns utilities */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -187,7 +217,7 @@ h1, h2, h3, h4, h5 {
   }
 }
 
-/* Spine Visualizer */
+/* Spine Visualizer (Left-pane alignment) */
 .spine-container {
   display: flex;
   flex-direction: column;
@@ -201,7 +231,7 @@ h1, h2, h3, h4, h5 {
 .spine-backbone {
   position: absolute;
   width: 4px;
-  background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-violet));
+  background: var(--text-dim);
   top: 40px;
   bottom: 40px;
   left: calc(50% - 2px);
@@ -210,59 +240,63 @@ h1, h2, h3, h4, h5 {
 }
 
 .spine-vertebra {
-  width: 160px;
-  height: 42px;
-  background: hsla(222, 47%, 18%, 0.9);
+  width: 170px;
+  height: 44px;
+  background: var(--bg-card);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
   z-index: 2;
+  box-shadow: var(--btn-shadow);
   transition: var(--transition-smooth);
 }
 
 .spine-vertebra.active {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+  background: var(--bg-card-hover);
+  transform: scale(1.04) translateZ(10px);
+  border-color: var(--color-border-glow);
 }
 
 .vertebra-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: hsla(215, 15%, 30%, 0.5);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-dark);
   width: 60px;
   position: relative;
   overflow: hidden;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 .vertebra-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+  background: var(--accent-cyan);
   width: 0%;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Custom switch / slider */
+/* Custom switch / slider style */
 .custom-range {
   -webkit-appearance: none;
   width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: hsla(215, 15%, 30%, 0.5);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-dark);
   outline: none;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 .custom-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--accent-cyan);
   cursor: pointer;
-  box-shadow: 0 0 8px var(--accent-cyan);
+  box-shadow: 0 0 6px var(--accent-cyan);
   transition: transform 0.1s;
 }
 
@@ -274,10 +308,11 @@ h1, h2, h3, h4, h5 {
 .camera-wrapper {
   position: relative;
   width: 100%;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
   background: #000;
   aspect-ratio: 4/3;
+  box-shadow: var(--glass-shadow);
 }
 
 .camera-feed {
@@ -295,10 +330,10 @@ h1, h2, h3, h4, h5 {
   pointer-events: none;
 }
 
-/* Animations */
+/* Dynamic pulsing state indicators */
 @keyframes pulseGlow {
-  0% { box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-  100% { box-shadow: 0 0 15px rgba(0, 229, 255, 0.5); }
+  0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); }
+  100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
 }
 
 .pulsing-glow {
@@ -319,7 +354,7 @@ h1, h2, h3, h4, h5 {
   background: var(--bg-dark);
   color: var(--text-primary);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 12px;
   padding: 6px 12px;
   font-size: 12px;
   white-space: nowrap;
