@@ -1,36 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg:           #08080a;
-  --surface:      #121214;
-  --surface-2:    #1a1a1e;
-  --border:       rgba(255, 255, 255, 0.02);
-  --border-hover: rgba(255, 255, 255, 0.05);
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted:   #52525b;
-  --text-dim:     #3f3f46;
-  --accent:       #f4f4f5;
-  --accent-hover: #ffffff;
-  --radius-sm:    12px;
-  --radius-md:    20px;
-  --radius-lg:    28px;
+  /* LIGHT MODE (Cream/Warm Clay) */
+  --bg: #FAF6F0; /* neutral-primary-soft */
+  --surface: #FAF6F0; /* neutral-primary */
+  --surface-secondary: #F3EDE4; /* neutral-secondary-soft */
+  --surface-medium: #F3EDE4; /* neutral-secondary-medium */
+  --border: #E0D7C9; /* border-default */
+  --text-primary: #2C2215; /* heading */
+  --text-secondary: #6B5C4A; /* body */
+  --text-muted: #87786A; /* body-subtle */
   
-  /* Stealth Claymorphism shadows */
-  --clay-shadow: 
-    inset 4px 4px 8px rgba(255, 255, 255, 0.03),
-    inset -6px -6px 12px rgba(0, 0, 0, 0.85),
-    0 16px 36px rgba(0, 0, 0, 0.6);
+  --brand: #1C398E; /* brand blue */
+  --danger: #C70036; /* danger red */
+  
+  --radius-base: 36px;
+  --radius-default: 999px;
+  
+  --shadow-sm: 
+    4px 8px 16px rgba(0,0,0,0.06), 
+    inset -3px -4px 8px rgba(0,0,0,0.04), 
+    inset 3px 4px 8px rgba(255,255,255,0.7);
     
-  --clay-shadow-hover: 
-    inset 5px 5px 10px rgba(255, 255, 255, 0.04),
-    inset -8px -8px 16px rgba(0, 0, 0, 0.9),
-    0 24px 48px rgba(0, 0, 0, 0.7);
+  --shadow-md: 
+    6px 12px 24px rgba(0,0,0,0.08), 
+    inset -4px -6px 10px rgba(0,0,0,0.04), 
+    inset 4px 6px 10px rgba(255,255,255,0.65);
+    
+  --shadow-lg: 
+    8px 16px 32px rgba(0,0,0,0.1), 
+    inset -5px -8px 14px rgba(0,0,0,0.04), 
+    inset 5px 8px 14px rgba(255,255,255,0.55);
+}
 
-  --clay-btn-stealth:
-    inset 3px 3px 6px rgba(255, 255, 255, 0.04),
-    inset -5px -5px 10px rgba(0, 0, 0, 0.8),
-    0 8px 24px rgba(0, 0, 0, 0.5);
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* DARK MODE (Stealth Matte Black/Grey) */
+    --bg: #0E0B08; /* neutral-primary */
+    --surface: #1B1714; /* neutral-primary-soft */
+    --surface-secondary: #1B1714;
+    --surface-medium: #272118; /* neutral-secondary-medium */
+    --border: #2C2215; /* border-default */
+    --text-primary: #FAF6F0; /* heading */
+    --text-secondary: #A99880; /* body */
+    --text-muted: #6B5C4A; /* fg-disabled */
+    
+    --brand: #4D72C7; /* brand blue */
+    --danger: #ef4444; /* danger red */
+    
+    --shadow-sm: 
+      4px 8px 16px rgba(0,0,0,0.25), 
+      inset -3px -4px 8px rgba(0,0,0,0.5), 
+      inset 3px 4px 8px rgba(255,255,255,0.04);
+      
+    --shadow-md: 
+      6px 12px 24px rgba(0,0,0,0.3), 
+      inset -4px -6px 10px rgba(0,0,0,0.5), 
+      inset 4px 6px 10px rgba(255,255,255,0.04);
+      
+    --shadow-lg: 
+      8px 16px 32px rgba(0,0,0,0.35), 
+      inset -5px -8px 14px rgba(0,0,0,0.5), 
+      inset 5px 8px 14px rgba(255,255,255,0.04);
+  }
 }
 
 * {
@@ -42,7 +74,7 @@
 html {
   background: var(--bg);
   color:      var(--text-primary);
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', 'Outfit', system-ui, sans-serif;
   font-size:   16px;
   line-height: 1.5;
   scroll-behavior: smooth;
@@ -52,22 +84,6 @@ html {
 body {
   background: var(--bg);
   min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Remove bright color blobs in favor of subtle, dark gray background vignettes */
-body::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 50% -10%, #1c1c21 0%, transparent 60%);
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.5;
 }
 
 a {
@@ -77,57 +93,65 @@ a {
 }
 
 a:hover {
-  color: var(--text-primary);
+  color: var(--brand);
 }
 
-/* Tactile panels (stealth claymorphism) */
+/* Claymorphic container panel class */
 .clay-card {
-  background: var(--surface);
+  background: var(--surface-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--clay-shadow);
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-md);
   padding: 32px;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
 }
 
 .clay-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--clay-shadow-hover);
-  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border);
 }
 
-/* Matte-Black 3D buttons */
+/* Claymorphic buttons classes */
 .clay-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: inherit;
-  border: none;
+  font-family: 'Poppins', inherit;
+  font-weight: 500;
+  border: 1px solid var(--border);
   cursor: pointer;
-  font-weight: 700;
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
   user-select: none;
 }
 
+.clay-btn-brand {
+  background: var(--brand);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.clay-btn-brand:hover {
+  transform: scale(1.02);
+  box-shadow: 
+    inset 4px 4px 8px rgba(255, 255, 255, 0.25),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.4),
+    0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
 .clay-btn-stealth {
-  background: var(--surface-2);
-  box-shadow: var(--clay-btn-stealth);
+  background: var(--surface-medium);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.01);
 }
 
 .clay-btn-stealth:hover {
   transform: scale(1.02);
-  background: #222226;
-  box-shadow: 
-    inset 4px 4px 8px rgba(255, 255, 255, 0.05),
-    inset -6px -6px 12px rgba(0, 0, 0, 0.85),
-    0 12px 28px rgba(0, 0, 0, 0.6);
+  background: var(--surface-secondary);
 }
 
-/* Section title settings */
 .section-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;

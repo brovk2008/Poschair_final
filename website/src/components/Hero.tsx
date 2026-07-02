@@ -13,12 +13,12 @@ export default function Hero() {
   }, [])
 
   const segments = [
-    { label: "Upper Thoracic", maxAngle: 70 },
-    { label: "Lower Thoracic", maxAngle: 70 },
-    { label: "Mid Lumbar Upper", maxAngle: 70 },
-    { label: "Mid Lumbar Lower", maxAngle: 70 },
-    { label: "Lower Lumbar", maxAngle: 70 },
-    { label: "Pelvis Actuator", maxAngle: 70 }
+    { label: "Upper Thoracic", type: "blue" },
+    { label: "Lower Thoracic", type: "blue" },
+    { label: "Mid Lumbar Upper", type: "blue" },
+    { label: "Mid Lumbar Lower", type: "blue" },
+    { label: "Lower Lumbar", type: "red" },
+    { label: "Pelvis Actuator", type: "red" }
   ]
 
   return (
@@ -31,17 +31,17 @@ export default function Hero() {
     }}>
       {/* Left side: Heading content */}
       <div style={{ textAlign: 'left' }}>
-        {/* Soft capsule badge (Monochromatic) */}
+        {/* Soft capsule badge */}
         <div style={{
           display:        'inline-flex',
           alignItems:     'center',
           gap:             8,
           padding:        '8px 16px',
-          background:     'var(--surface)',
-          boxShadow:      'inset 2px 2px 4px rgba(255,255,255,0.03), inset -2px -2px 4px rgba(0,0,0,0.8)',
-          borderRadius:    30,
+          background:     'var(--surface-secondary)',
+          boxShadow:      'var(--shadow-sm)',
+          borderRadius:    'var(--radius-default)',
           fontSize:        '11px',
-          fontWeight:      800,
+          fontWeight:      700,
           letterSpacing:  '0.06em',
           textTransform:  'uppercase',
           color:          'var(--text-secondary)',
@@ -50,31 +50,31 @@ export default function Hero() {
           <span style={{ 
             width: '6px', 
             height: '6px', 
-            background: '#ffffff', 
+            background: 'var(--brand)', 
             borderRadius: '50%',
-            boxShadow: '0 0 8px rgba(255,255,255,0.6)'
+            boxShadow: '0 0 8px var(--brand)'
           }} />
           Open Source Project · MIT License
         </div>
 
         <h1 style={{
-          fontSize:    '58px',
+          fontSize:    '60px',
           fontWeight:  800,
-          lineHeight:  1.1,
-          letterSpacing: '-0.03em',
+          lineHeight:  1.05,
+          letterSpacing: '-0.8px',
           marginBottom: '24px',
           color:       'var(--text-primary)',
         }}>
           Your chair corrects<br />
-          <span style={{ color: 'var(--text-secondary)' }}>
+          <span style={{ color: 'var(--brand)' }}>
             your posture for you.
           </span>
         </h1>
 
         <p style={{
-          fontSize:    '18px',
+          fontSize:    '20px',
           color:       'var(--text-secondary)',
-          lineHeight:   1.65,
+          lineHeight:   1.7,
           marginBottom: '48px',
           maxWidth: '540px'
         }}>
@@ -89,13 +89,13 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Right side: Cybernetic Spine Matte-Black Dashboard Mockup */}
+      {/* Right side: Cybernetic Spine Dashboard Mockup */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div className="clay-card" style={{ 
           width: '380px', 
-          background: 'var(--surface)',
+          background: 'var(--surface-secondary)',
           padding: '36px', 
-          borderRadius: '32px',
+          borderRadius: 'var(--radius-base)',
           position: 'relative'
         }}>
           {/* Header */}
@@ -105,16 +105,17 @@ export default function Hero() {
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>Live Feedback</h3>
             </div>
             <div style={{ 
-              background: '#ffffff', 
-              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.3)',
+              background: 'var(--surface-medium)', 
+              boxShadow: 'var(--shadow-sm)',
               width: '32px', 
               height: '32px', 
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              color: 'var(--brand)'
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </div>
 
@@ -122,15 +123,16 @@ export default function Hero() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {segments.map((s, idx) => {
               const active = activeSegment === idx;
+              const colorVal = s.type === "red" ? "var(--danger)" : "var(--brand)";
               return (
                 <div key={idx} style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'space-between',
-                  background: active ? 'var(--surface-2)' : 'transparent',
+                  background: active ? 'var(--surface-medium)' : 'transparent',
                   padding: '8px 12px',
-                  borderRadius: '14px',
-                  border: active ? '1px solid rgba(255, 255, 255, 0.02)' : '1px solid transparent',
+                  borderRadius: 'var(--radius-sm)',
+                  border: active ? '1px solid var(--border)' : '1px solid transparent',
                   transition: 'all 0.3s ease'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -141,10 +143,10 @@ export default function Hero() {
                   {/* Tactile segment bar */}
                   <div style={{ 
                     width: '90px', 
-                    height: '12px', 
-                    background: '#0a0a0c', 
+                    height: '14px', 
+                    background: 'var(--surface-medium)', 
                     borderRadius: '8px', 
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.8), 1px 1px 2px rgba(255,255,255,0.02)',
+                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), 1px 1px 2px rgba(255,255,255,0.05)',
                     position: 'relative',
                     overflow: 'hidden'
                   }}>
@@ -154,7 +156,7 @@ export default function Hero() {
                       left: 0,
                       height: '100%',
                       width: active ? '75%' : '15%',
-                      background: active ? '#ffffff' : '#334155',
+                      background: active ? colorVal : 'var(--text-muted)',
                       borderRadius: '8px',
                       boxShadow: active ? 'inset 1px 1px 2px rgba(255,255,255,0.5)' : 'none',
                       transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -171,10 +173,10 @@ export default function Hero() {
             bottom: '-20px',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'var(--surface-2)',
-            boxShadow: 'var(--clay-shadow)',
+            background: 'var(--surface-medium)',
+            boxShadow: 'var(--shadow-sm)',
             border: '1px solid var(--border)',
-            borderRadius: '16px',
+            borderRadius: 'var(--radius-sm)',
             padding: '8px 24px',
             display: 'flex',
             alignItems: 'center',
@@ -184,7 +186,7 @@ export default function Hero() {
             color: 'var(--text-primary)',
             whiteSpace: 'nowrap'
           }}>
-            <span style={{ width: '8px', height: '8px', background: '#ffffff', borderRadius: '50%', boxShadow: '0 0 8px rgba(255,255,255,0.6)' }} />
+            <span style={{ width: '8px', height: '8px', background: 'var(--brand)', borderRadius: '50%', boxShadow: '0 0 8px var(--brand)' }} />
             Active Mode: Office (1.0x)
           </div>
         </div>

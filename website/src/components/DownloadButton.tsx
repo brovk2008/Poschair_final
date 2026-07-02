@@ -31,10 +31,10 @@ export default function DownloadButton() {
       href={exeAsset?.browser_download_url ?? `https://github.com/${REPO}/releases`}
       target="_blank"
       rel="noopener noreferrer"
-      className="clay-btn clay-btn-stealth"
+      className="clay-btn clay-btn-brand"
       style={{
         padding: '16px 36px',
-        borderRadius: '14px',
+        borderRadius: '999px',
         fontSize: '15px',
         textDecoration: 'none',
       }}
