@@ -1,191 +1,85 @@
-// Web Bluetooth Manager for PosChair Client App
+// BLE UUIDs — must match firmware config.h exactly
+const SERVICE_UUID      = 'a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e';
+const COMMAND_CHAR_UUID = 'a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e';
+const STATUS_CHAR_UUID  = 'a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e';
 
-export interface DeviceStatus {
-  connected: boolean;
-  failsafeActive: boolean;
+export interface StatusData {
+  flags: number;           // bit0=ok, bit1=failsafe, bit2=connected
   batteryMv: number;
-  currentAngles: number[];
+  currentAngles: number[]; // [6]
 }
 
-export type StatusCallback = (status: DeviceStatus) => void;
+export interface BLEManager {
+  connect(): Promise<void>;
+  disconnect(): void;
+  sendAngles(angles: number[]): void;  // angles[6], each 0–70
+  isConnected(): boolean;
+  onStatus: ((s: StatusData) => void) | null;
+  onDisconnect: (() => void) | null;
+}
 
-class BLEManager {
-  private device: BluetoothDevice | null = null;
-  private gattServer: BluetoothRemoteGATTServer | null = null;
-  private txCharacteristic: BluetoothRemoteGATTCharacteristic | null = null; // Notify
-  private rxCharacteristic: BluetoothRemoteGATTCharacteristic | null = null; // Write
+function buildCommandPacket(angles: number[]): ArrayBuffer {
+  const buf = new Uint8Array(8);
+  buf[0] = 0xA5; // header
+  for (let i = 0; i < 6; i++) buf[i + 1] = Math.min(70, Math.max(0, angles[i]));
+  let cs = 0;
+  for (let i = 0; i < 7; i++) cs ^= buf[i];
+  buf[7] = cs;
+  return buf.buffer;
+}
 
-  private serviceUuid = 'a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e';
-  private rxCharUuid  = 'a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e';
-  private txCharUuid  = 'a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e';
+function parseStatusPacket(buf: DataView): StatusData | null {
+  if (buf.byteLength < 10) return null;
+  if (buf.getUint8(0) !== 0x5A) return null;
+  return {
+    flags: buf.getUint8(1),
+    batteryMv: buf.getUint16(2, false), // big-endian
+    currentAngles: Array.from({ length: 6 }, (_, i) => buf.getUint8(4 + i)),
+  };
+}
 
-  private statusCallbacks: StatusCallback[] = [];
-  public isConnecting = false;
+export function createBLEManager(): BLEManager {
+  let device: BluetoothDevice | null = null;
+  let cmdChar: BluetoothRemoteGATTCharacteristic | null = null;
 
-  // Add listener for status updates
-  public addStatusListener(callback: StatusCallback) {
-    this.statusCallbacks.push(callback);
-  }
+  const mgr: BLEManager = {
+    onStatus: null,
+    onDisconnect: null,
 
-  // Remove listener
-  public removeStatusListener(callback: StatusCallback) {
-    this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
-  }
-
-  // Check if connected
-  public isConnected(): boolean {
-    return this.gattServer?.connected || false;
-  }
-
-  // Connect to device
-  public async connect(): Promise<boolean> {
-    if (!navigator.bluetooth) {
-      throw new Error("Web Bluetooth is not supported on this browser/platform. Try Chrome or Edge.");
-    }
-
-    try {
-      this.isConnecting = true;
-      console.log("Scanning for PosChair BLE peripheral...");
-      
-      this.device = await navigator.bluetooth.requestDevice({
+    async connect() {
+      device = await navigator.bluetooth.requestDevice({
         filters: [{ name: 'POSCHAIR_001' }],
-        optionalServices: [this.serviceUuid]
+        optionalServices: [SERVICE_UUID],
       });
+      device.addEventListener('gattserverdisconnected', () => {
+        cmdChar = null;
+        mgr.onDisconnect?.();
+      });
+      const server  = await device.gatt!.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      cmdChar       = await service.getCharacteristic(COMMAND_CHAR_UUID);
+      const statCh  = await service.getCharacteristic(STATUS_CHAR_UUID);
+      await statCh.startNotifications();
+      statCh.addEventListener('characteristicvaluechanged', (e) => {
+        const val = (e.target as BluetoothRemoteGATTCharacteristic).value!;
+        const parsed = parseStatusPacket(val);
+        if (parsed) mgr.onStatus?.(parsed);
+      });
+    },
 
-      console.log("Device found:", this.device.name);
-      
-      // Connect to GATT
-      this.device.addEventListener('gattserverdisconnected', this.handleDisconnect.bind(this));
-      this.gattServer = await this.device.gatt!.connect();
-      console.log("GATT server connected.");
+    disconnect() {
+      device?.gatt?.disconnect();
+      cmdChar = null;
+    },
 
-      // Get Service
-      const service = await this.gattServer.getPrimaryService(this.serviceUuid);
-      console.log("Primary service resolved.");
+    sendAngles(angles: number[]) {
+      if (!cmdChar) return;
+      cmdChar.writeValueWithoutResponse(buildCommandPacket(angles)).catch(console.error);
+    },
 
-      // Get Characteristics
-      this.rxCharacteristic = await service.getCharacteristic(this.rxCharUuid);
-      this.txCharacteristic = await service.getCharacteristic(this.txCharUuid);
-      console.log("Characteristics loaded.");
-
-      // Set up notification callback
-      await this.txCharacteristic.startNotifications();
-      this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
-      console.log("Notifications subscribed.");
-
-      this.isConnecting = false;
-      this.notifyConnectionStateChange();
-      return true;
-    } catch (error) {
-      this.isConnecting = false;
-      console.error("BLE Connection failed:", error);
-      this.cleanup();
-      throw error;
-    }
-  }
-
-  // Disconnect from device
-  public disconnect() {
-    if (this.device && this.device.gatt?.connected) {
-      this.device.gatt.disconnect();
-    }
-    this.cleanup();
-  }
-
-  // Send target angles to chair (8-byte binary packet)
-  public async sendAngles(angles: number[]): Promise<boolean> {
-    if (!this.isConnected() || !this.rxCharacteristic) {
-      return false;
-    }
-
-    if (angles.length !== 6) {
-      throw new Error("Must provide exactly 6 target servo angles");
-    }
-
-    try {
-      const buffer = new ArrayBuffer(8);
-      const view = new DataView(buffer);
-
-      // Byte 0: Header (0xA5)
-      view.setUint8(0, 0xA5);
-
-      // Bytes 1-6: Target Angles (clamped 0 to 180)
-      let checksum = 0xA5;
-      for (let i = 0; i < 6; i++) {
-        const val = Math.min(180, Math.max(0, Math.round(angles[i])));
-        view.setUint8(i + 1, val);
-        checksum ^= val;
-      }
-
-      // Byte 7: Checksum (XOR)
-      view.setUint8(7, checksum);
-
-      // Write value (write without response is faster/non-blocking)
-      await this.rxCharacteristic.writeValueWithoutResponse(buffer);
-      return true;
-    } catch (err) {
-      console.error("Failed to send angles packet:", err);
-      return false;
-    }
-  }
-
-  private handleNotification(event: Event) {
-    const target = event.target as BluetoothRemoteGATTCharacteristic;
-    const value = target.value;
-    if (!value || value.byteLength !== 10) return;
-
-    const view = new DataView(value.buffer);
-    
-    // Byte 0: Header (0x5A)
-    const header = view.getUint8(0);
-    if (header !== 0x5A) return;
-
-    // Byte 1: Flags (Bit 0 = Connected, Bit 1 = Failsafe Active)
-    const flags = view.getUint8(1);
-    const failsafeActive = (flags & 0x02) !== 0;
-
-    // Bytes 2-3: Battery (uint16, big endian)
-    const batteryMv = view.getUint16(2, false);
-
-    // Bytes 4-9: Current servo angles
-    const currentAngles: number[] = [];
-    for (let i = 0; i < 6; i++) {
-      currentAngles.push(view.getUint8(4 + i));
-    }
-
-    const status: DeviceStatus = {
-      connected: true,
-      failsafeActive,
-      batteryMv,
-      currentAngles
-    };
-
-    // Dispatch status to all listeners
-    this.statusCallbacks.forEach(cb => cb(status));
-  }
-
-  private handleDisconnect() {
-    console.log("Device disconnected.");
-    this.cleanup();
-    this.notifyConnectionStateChange();
-  }
-
-  private notifyConnectionStateChange() {
-    const status: DeviceStatus = {
-      connected: this.isConnected(),
-      failsafeActive: false,
-      batteryMv: 0,
-      currentAngles: [90, 90, 90, 90, 90, 90]
-    };
-    this.statusCallbacks.forEach(cb => cb(status));
-  }
-
-  private cleanup() {
-    this.device = null;
-    this.gattServer = null;
-    this.txCharacteristic = null;
-    this.rxCharacteristic = null;
-  }
+    isConnected() {
+      return device?.gatt?.connected ?? false;
+    },
+  };
+  return mgr;
 }
-
-export const bleManager = new BLEManager();

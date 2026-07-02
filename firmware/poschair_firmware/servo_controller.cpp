@@ -1,88 +1,47 @@
 #include "servo_controller.h"
 
-ServoController::ServoController() : _pwm(PCA9685_ADDR) {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        _current_angles[i] = SERVO_NEUTRAL_ANGLE;
-        _target_angles[i] = SERVO_NEUTRAL_ANGLE;
-    }
+void ServoController::begin() {
+  _pwm.begin();
+  _pwm.setPWMFreq(50);
+  for (int i = 0; i < NUM_SERVOS; i++) {
+    _current[i] = NEUTRAL_ANGLE;
+    _target[i]  = NEUTRAL_ANGLE;
+    _writePulse(i, NEUTRAL_ANGLE);
+  }
+  delay(500); // let servos reach neutral before anything else
 }
 
-bool ServoController::begin() {
-    _pwm.begin();
-    _pwm.setOscillatorFrequency(27000000); // Standard PCA9685 internal oscillator is 27MHz
-    _pwm.setPWMFreq(SERVO_FREQ);
-    delay(10); // Wait for oscillator stabilization
-    
-    // Command all servos to neutral state on startup
-    resetToNeutral();
-    return true;
-}
-
-void ServoController::setTargetAngles(const uint8_t angles[NUM_SERVOS]) {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        setTargetAngle(i, angles[i]);
-    }
-}
-
-void ServoController::setTargetAngle(uint8_t index, uint8_t angle) {
-    if (index >= NUM_SERVOS) return;
-    
-    // Clamp angle to safe operational boundaries
-    if (angle < SERVO_MIN_SAFE_ANGLE) {
-        _target_angles[index] = SERVO_MIN_SAFE_ANGLE;
-    } else if (angle > SERVO_MAX_SAFE_ANGLE) {
-        _target_angles[index] = SERVO_MAX_SAFE_ANGLE;
-    } else {
-        _target_angles[index] = angle;
-    }
+void ServoController::setTarget(int idx, uint8_t angleDeg) {
+  if (idx < 0 || idx >= NUM_SERVOS) return;
+  if (angleDeg > MAX_SAFE_ANGLE) angleDeg = MAX_SAFE_ANGLE;
+  _target[idx] = angleDeg;
 }
 
 void ServoController::update() {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        float diff = _target_angles[i] - _current_angles[i];
-        
-        if (abs(diff) > 0.01f) {
-            // Apply simple linear interpolation easing to prevent snappy movement
-            if (abs(diff) <= SERVO_INTERPOLATION_STEP) {
-                _current_angles[i] = _target_angles[i];
-            } else {
-                if (diff > 0) {
-                    _current_angles[i] += SERVO_INTERPOLATION_STEP;
-                } else {
-                    _current_angles[i] -= SERVO_INTERPOLATION_STEP;
-                }
-            }
-            writeAngleToPCA(i, _current_angles[i]);
-        }
+  unsigned long now = millis();
+  if (now - _lastUpdateMs < SERVO_UPDATE_MS) return;
+  _lastUpdateMs = now;
+
+  for (int i = 0; i < NUM_SERVOS; i++) {
+    if (_current[i] < _target[i]) {
+      _current[i] = min((int)_target[i], (int)_current[i] + SERVO_STEP_DEG);
+    } else if (_current[i] > _target[i]) {
+      _current[i] = max((int)_target[i], (int)_current[i] - SERVO_STEP_DEG);
     }
+    _writePulse(i, _current[i]);
+  }
 }
 
-void ServoController::resetToNeutral() {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        _target_angles[i] = SERVO_NEUTRAL_ANGLE;
-    }
-    // Instantly set current angles to neutral for instant recovery/failsafe
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        _current_angles[i] = SERVO_NEUTRAL_ANGLE;
-        writeAngleToPCA(i, SERVO_NEUTRAL_ANGLE);
-    }
+uint8_t ServoController::getCurrentAngle(int idx) const {
+  if (idx < 0 || idx >= NUM_SERVOS) return 0;
+  return _current[idx];
 }
 
-void ServoController::getCurrentAngles(uint8_t out_angles[NUM_SERVOS]) const {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        out_angles[i] = (uint8_t)round(_current_angles[i]);
-    }
+void ServoController::goNeutralAll() {
+  for (int i = 0; i < NUM_SERVOS; i++) setTarget(i, NEUTRAL_ANGLE);
 }
 
-void ServoController::getTargetAngles(uint8_t out_angles[NUM_SERVOS]) const {
-    for (int i = 0; i < NUM_SERVOS; i++) {
-        out_angles[i] = _target_angles[i];
-    }
-}
-
-void ServoController::writeAngleToPCA(uint8_t channel, float angle) {
-    // Map the 0-180 range to the pulse width duration in microseconds
-    float constrained_angle = constrain(angle, 0.0f, 180.0f);
-    uint16_t pulse_us = map(constrained_angle, 0.0f, 180.0f, USMIN, USMAX);
-    _pwm.writeMicroseconds(channel, pulse_us);
+void ServoController::_writePulse(int idx, uint8_t angleDeg) {
+  int pulse = map(angleDeg, 0, 180, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
+  _pwm.writeMicroseconds(idx, pulse);
 }

@@ -1,17 +1,16 @@
-version: '3.8'
-
+version: "3.9"
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16
     container_name: poschair_db
     environment:
       POSTGRES_USER: poschair
-      POSTGRES_PASSWORD: poschairpassword
+      POSTGRES_PASSWORD: poschair
       POSTGRES_DB: poschair
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U poschair -d poschair"]
       interval: 5s
@@ -19,35 +18,28 @@ services:
       retries: 5
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     container_name: poschair_backend
-    volumes:
-      - ./backend:/app
-      - /app/venv
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://poschair:poschairpassword@db:5432/poschair
+      DATABASE_URL: postgresql://poschair:poschair@db:5432/poschair
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
     container_name: poschair_frontend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8000
-    depends_on:
-      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
-  postgres_data:
+  pgdata:

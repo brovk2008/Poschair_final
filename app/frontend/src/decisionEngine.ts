@@ -1,107 +1,53 @@
-// Decision Engine for PosChair target angle mapping
-import { PostureEvaluation } from "./postureAnalyzer";
+import type { PostureData } from './postureAnalyzer';
 
-export type IntensityMode = "Office" | "Gaming" | "Study" | "Relax";
+export type Mode = 'office' | 'gaming' | 'study' | 'relax';
 
-export interface DecisionEngineConfig {
-  mode: IntensityMode;
-  supportLevel: "Low" | "Medium" | "High";
-  neutralAngle: number; // Defaults to 90
-  maxPushAngle: number;  // Max compression (e.g. 140)
-  minRelaxAngle: number; // Min relaxation (e.g. 60)
+// Module index → anatomical zone
+// 0: Upper Thoracic, 1: Lower Thoracic, 2: Mid Lumbar Upper
+// 3: Mid Lumbar Lower, 4: Lower Lumbar, 5: Pelvis
+
+interface AngleRow { thoracic: number; lumbar: number; pelvis: number; }
+
+// Base table (Mode: "office"). Other modes scale the output.
+// Deviation is spineAngleDeg from calibrated baseline.
+function baseAngles(deviation: number): AngleRow {
+  if (deviation <= 5)  return { thoracic: 0,  lumbar: 0,  pelvis: 0  };
+  if (deviation <= 12) return { thoracic: 0,  lumbar: 20, pelvis: 10 };
+  if (deviation <= 20) return { thoracic: 20, lumbar: 40, pelvis: 25 };
+  return               { thoracic: 30, lumbar: 60, pelvis: 40 };
 }
 
-// Translate posture metrics and evaluation to 6 servo target angles
-export function calculateTargetAngles(
-  evaluation: PostureEvaluation,
-  config: DecisionEngineConfig
-): number[] {
-  const { neutralAngle, maxPushAngle, minRelaxAngle } = config;
-  const { metrics, isSlouching, isHeadForward } = evaluation;
+// Mode scaling factors
+const MODE_SCALE: Record<Mode, number> = {
+  office: 1.0,
+  gaming: 1.2,  // slightly more aggressive
+  study:  0.9,  // slightly gentler
+  relax:  0.5,  // very gentle
+};
 
-  // Start with all servos at neutral (90 deg / flat)
-  const targets = Array(6).fill(neutralAngle);
+export function computeTargetAngles(posture: PostureData, mode: Mode): number[] {
+  const deviation = Math.max(0, posture.spineAngleDeg); // only forward lean triggers correction
+  const base  = baseAngles(deviation);
+  const scale = MODE_SCALE[mode];
 
-  // Set multipliers based on intensity modes
-  let modeFactor = 1.0;
-  switch (config.mode) {
-    case "Relax":
-      modeFactor = 0.5; // Very soft corrections
-      break;
-    case "Study":
-      modeFactor = 0.8; // Gentle, steady support
-      break;
-    case "Office":
-      modeFactor = 1.0; // Balanced standard
-      break;
-    case "Gaming":
-      modeFactor = 1.3; // Responsive, firm correction
-      break;
-  }
+  const angles: number[] = [
+    Math.round(base.thoracic * scale),  // module 0: upper thoracic
+    Math.round(base.thoracic * scale),  // module 1: lower thoracic
+    Math.round(base.lumbar   * scale),  // module 2: mid lumbar upper
+    Math.round(base.lumbar   * scale),  // module 3: mid lumbar lower
+    Math.round(base.lumbar   * scale),  // module 4: lower lumbar
+    Math.round(base.pelvis   * scale),  // module 5: pelvis
+  ];
 
-  // Set multipliers based on support preference level
-  let supportFactor = 1.0;
-  switch (config.supportLevel) {
-    case "Low":
-      supportFactor = 0.7;
-      break;
-    case "Medium":
-      supportFactor = 1.0;
-      break;
-    case "High":
-      supportFactor = 1.4;
-      break;
-  }
+  // Clamp to max safe angle
+  return angles.map(a => Math.min(70, Math.max(0, a)));
+}
 
-  const finalFactor = modeFactor * supportFactor;
+export function isLateralLean(posture: PostureData): boolean {
+  return Math.abs(posture.lateralLeanDeg) > 5;
+}
 
-  // Let's analyze and correct each spine zone:
-  
-  // 1. Upper Thoracic (Module 1 - Index 0) & Lower Thoracic (Module 2 - Index 1)
-  // Corrects forward head / rounded shoulders.
-  // Pushes out thoracic support to encourage shoulder retraction and neck alignment.
-  if (isHeadForward) {
-    const headDeviation = Math.max(0, evaluation.metrics.forwardHeadOffset);
-    // Push upper modules forward
-    const correction1 = headDeviation * 40 * finalFactor;
-    targets[0] = Math.min(maxPushAngle, neutralAngle + correction1);
-    
-    const correction2 = headDeviation * 30 * finalFactor;
-    targets[1] = Math.min(maxPushAngle, neutralAngle + correction2);
-  }
-
-  // 2. Mid Lumbar (Modules 3 & 4 - Indices 2 & 3)
-  // Corrects general back slouch/rounding.
-  if (isSlouching) {
-    // Slouch score indicates how compressed the spine is.
-    // Scale correction by how far the slouch goes
-    const slouchAmount = Math.max(0, 100 - evaluation.overallScore);
-    const correction = (slouchAmount / 100) * 45 * finalFactor;
-
-    targets[2] = Math.min(maxPushAngle, neutralAngle + correction);
-    targets[3] = Math.min(maxPushAngle, neutralAngle + correction);
-  }
-
-  // 3. Lower Lumbar & Pelvic support (Modules 5 & 6 - Indices 4 & 5)
-  // Continual base lumbar support depending on user-selected comfort profile,
-  // flexing slightly more if slouching persists.
-  let baselineLumbarSupport = 0;
-  if (config.supportLevel === "Low") baselineLumbarSupport = 5;
-  if (config.supportLevel === "Medium") baselineLumbarSupport = 12;
-  if (config.supportLevel === "High") baselineLumbarSupport = 22;
-
-  targets[4] = neutralAngle + (baselineLumbarSupport * modeFactor);
-  targets[5] = neutralAngle + ((baselineLumbarSupport / 2) * modeFactor);
-
-  if (isSlouching) {
-    // Add additional support active flex under slouching
-    targets[4] = Math.min(maxPushAngle, targets[4] + (15 * finalFactor));
-    targets[5] = Math.min(maxPushAngle, targets[5] + (10 * finalFactor));
-  }
-
-  // Ensure all values are integer rounded and clamped to safe mechanical limits
-  return targets.map(val => {
-    const clamped = Math.max(minRelaxAngle, Math.min(maxPushAngle, val));
-    return Math.round(clamped);
-  });
+export function lateralLeanDirection(posture: PostureData): 'left' | 'right' | null {
+  if (!isLateralLean(posture)) return null;
+  return posture.lateralLeanDeg > 0 ? 'right' : 'left';
 }
