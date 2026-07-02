@@ -11,13 +11,12 @@ public:
   unsigned long lastValidPacketMs() const { return _lastPacketMs; }
   bool isConnected() const;
 
+  ServoController* _sc = nullptr;          // public for callback access
+
 private:
-  ServoController* _sc = nullptr;
   NimBLECharacteristic* _statusChar = nullptr;
   NimBLEServer* _server = nullptr;
   unsigned long _lastPacketMs = 0;
-  friend class CmdCallback;
-  friend class ServerCB;
 };
 
-extern BLEManager bleManager; // single global instance
+extern BLEManager bleManager;

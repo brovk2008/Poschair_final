@@ -21,7 +21,7 @@ export interface BLEManager {
 function buildCommandPacket(angles: number[]): ArrayBuffer {
   const buf = new Uint8Array(8);
   buf[0] = 0xA5; // header
-  for (let i = 0; i < 6; i++) buf[i + 1] = Math.min(70, Math.max(0, angles[i]));
+  for (let i = 0; i < 6; i++) buf[i + 1] = Math.min(55, Math.max(0, angles[i]));
   let cs = 0;
   for (let i = 0; i < 7; i++) cs ^= buf[i];
   buf[7] = cs;

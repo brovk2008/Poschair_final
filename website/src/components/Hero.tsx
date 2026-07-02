@@ -13,12 +13,12 @@ export default function Hero() {
   }, [])
 
   const segments = [
-    { label: "Upper Thoracic", type: "blue" },
-    { label: "Lower Thoracic", type: "blue" },
-    { label: "Mid Lumbar Upper", type: "blue" },
-    { label: "Mid Lumbar Lower", type: "blue" },
-    { label: "Lower Lumbar", type: "red" },
-    { label: "Pelvis Actuator", type: "red" }
+    { label: "Upper-Left (UL)", type: "blue" },
+    { label: "Upper-Right (UR)", type: "blue" },
+    { label: "Mid-Left (ML)", type: "blue" },
+    { label: "Mid-Right (MR)", type: "blue" },
+    { label: "Lower-Left (LL)", type: "red" },
+    { label: "Lower-Right (LR)", type: "red" }
   ]
 
   // Calculate dynamic bending chord coordinates for the spring-steel simulator ribbon

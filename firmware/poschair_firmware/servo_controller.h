@@ -5,10 +5,10 @@
 class ServoController {
 public:
   void begin();
-  void setTarget(int idx, uint8_t angleDeg);   // clamps to MAX_SAFE_ANGLE
-  void update();                                 // call every loop(); eases toward target
+  void setTarget(int idx, uint8_t angleDeg);  // idx: 0=UL,1=UR,2=ML,3=MR,4=LL,5=LR
+  void update();                               // call every loop() — eases toward target
   uint8_t getCurrentAngle(int idx) const;
-  void goNeutralAll();                           // set all targets to NEUTRAL_ANGLE
+  void goNeutralAll();
 
 private:
   Adafruit_PWMServoDriver _pwm;

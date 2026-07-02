@@ -84,6 +84,7 @@ export default function App() {
         if (cal && !cal.detail) {
           setBaseline({
             spineAngle0: cal.spine_angle_0,
+            lateralAngle0: cal.lateral_angle_0 ?? 0.0,
             shoulderWidth: cal.shoulder_width
           });
         }
@@ -129,7 +130,7 @@ export default function App() {
     setBaseline(newBaseline);
     if (userId) {
       try {
-        await saveCalToApi(userId, newBaseline.spineAngle0, newBaseline.shoulderWidth);
+        await saveCalToApi(userId, newBaseline.spineAngle0, newBaseline.lateralAngle0, newBaseline.shoulderWidth);
       } catch (err) {
         console.warn("Unable to save calibration to backend database.");
       }

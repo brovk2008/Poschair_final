@@ -13,11 +13,11 @@ export async function getProfile(userId: number) {
   return (await fetch(`${BASE}/profile/${userId}`)).json();
 }
 
-export async function saveCalibration(userId: number, spineAngle0: number, shoulderWidth: number) {
+export async function saveCalibration(userId: number, spineAngle0: number, lateralAngle0: number, shoulderWidth: number) {
   const r = await fetch(`${BASE}/calibration/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, spine_angle_0: spineAngle0, shoulder_width: shoulderWidth }),
+    body: JSON.stringify({ user_id: userId, spine_angle_0: spineAngle0, lateral_angle_0: lateralAngle0, shoulder_width: shoulderWidth }),
   });
   return r.json();
 }

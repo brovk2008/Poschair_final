@@ -17,6 +17,7 @@ class CalibrationCreate(BaseModel):
     user_id: int
     spine_angle_0: float
     shoulder_width: float
+    lateral_angle_0: float = 0.0
 
 class CalibrationOut(CalibrationCreate):
     id: int

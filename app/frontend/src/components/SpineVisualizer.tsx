@@ -4,76 +4,97 @@ import { Activity } from 'lucide-react';
 interface SpineVisualizerProps {
   targetAngles: number[];
   currentAngles: number[];
-  labels?: string[];
 }
 
-const DEFAULT_LABELS = [
-  "Upper Thoracic",
-  "Lower Thoracic",
-  "Mid Lumbar Upper",
-  "Mid Lumbar Lower",
-  "Lower Lumbar",
-  "Pelvis"
+const MODULES = [
+  { index: 0, label: "Upper-Left (UL)", ch: 0 },
+  { index: 1, label: "Upper-Right (UR)", ch: 1 },
+  { index: 2, label: "Mid-Left (ML)", ch: 2 },
+  { index: 3, label: "Mid-Right (MR)", ch: 3 },
+  { index: 4, label: "Lower-Left (LL)", ch: 4 },
+  { index: 5, label: "Lower-Right (LR)", ch: 5 }
 ];
 
 export const SpineVisualizer: React.FC<SpineVisualizerProps> = ({
   targetAngles,
-  currentAngles,
-  labels = DEFAULT_LABELS
+  currentAngles
 }) => {
   return (
     <div className="glass-panel glass-panel-glow">
-      <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
         <Activity size={18} style={{ color: 'var(--accent-cyan)' }} />
-        Mechanical Spine Actuators
+        Mechanical Spine Grid Actuators
       </h3>
 
-      <div className="spine-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative' }}>
-        {labels.map((name, i) => {
-          const target = targetAngles[i] ?? 0;
-          const current = currentAngles[i] ?? 0;
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr', 
+        gap: '12px', 
+        position: 'relative' 
+      }}>
+        {/* Visual spine vertical line overlay in center */}
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          top: '10px',
+          bottom: '10px',
+          width: '2px',
+          background: 'var(--text-dim)',
+          transform: 'translateX(-50%)',
+          zIndex: 1,
+          opacity: 0.3
+        }} />
+
+        {MODULES.map((m) => {
+          const target = targetAngles[m.index] ?? 0;
+          const current = currentAngles[m.index] ?? 0;
           
-          // Max angle is 70 degrees per Section 3.2
-          const pct = Math.round((target / 70) * 100);
+          // Max safe angle is 55 degrees in V2
+          const pct = Math.round((target / 55) * 100);
           const active = target > 0;
+          const activeColor = m.index >= 4 ? 'var(--accent-violet)' : 'var(--accent-cyan)';
 
           return (
             <div 
-              key={i} 
+              key={m.index} 
               className={`spine-vertebra ${active ? 'active' : ''}`}
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                background: active ? 'rgba(79, 140, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                border: active ? '1px solid var(--accent-cyan)' : '1px solid var(--color-border)',
-                transition: 'all 0.3s ease'
+                flexDirection: 'column',
+                gap: '8px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                background: active ? 'var(--bg-card-hover)' : 'var(--bg-dark)',
+                border: active ? `1px solid ${activeColor}` : '1px solid var(--color-border)',
+                boxShadow: active ? 'var(--btn-shadow-pressed)' : 'var(--btn-shadow)',
+                transition: 'all 0.3s ease',
+                zIndex: 2,
+                position: 'relative'
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{name}</span>
+                <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{m.label}</span>
                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                  Target: {target}° | Actual: {current}°
+                  Trg: {target}° | Act: {current}°
                 </span>
               </div>
               <div 
                 className="vertebra-bar"
                 style={{
-                  height: '6px',
-                  width: '80px',
-                  borderRadius: '3px',
-                  background: 'rgba(255,255,255,0.1)',
+                  height: '8px',
+                  width: '100%',
+                  borderRadius: '4px',
+                  background: 'var(--bg-dark)',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.8)'
                 }}
               >
                 <div 
                   className="vertebra-fill"
                   style={{
                     height: '100%',
-                    background: 'linear-gradient(90deg, var(--accent-cyan), var(--accent-violet))',
+                    background: activeColor,
                     width: `${Math.min(100, Math.max(0, pct))}%`,
                     transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}

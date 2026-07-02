@@ -16,12 +16,13 @@ class User(Base):
 
 class Calibration(Base):
     __tablename__ = "calibrations"
-    id             = Column(Integer, primary_key=True, index=True)
-    user_id        = Column(Integer, ForeignKey("users.id"))
-    spine_angle_0  = Column(Float)   # "natural sit" baseline
-    shoulder_width = Column(Float)   # for normalizing forward-head offset
-    created_at     = Column(DateTime, default=datetime.utcnow)
-    user           = relationship("User", back_populates="calibrations")
+    id              = Column(Integer, primary_key=True, index=True)
+    user_id         = Column(Integer, ForeignKey("users.id"))
+    spine_angle_0   = Column(Float)   # "natural sit" baseline
+    shoulder_width  = Column(Float)   # for normalizing forward-head offset
+    lateral_angle_0 = Column(Float, default=0.0) # "natural sit" baseline lateral lean
+    created_at      = Column(DateTime, default=datetime.utcnow)
+    user            = relationship("User", back_populates="calibrations")
 
 class PostureSession(Base):
     __tablename__ = "posture_sessions"

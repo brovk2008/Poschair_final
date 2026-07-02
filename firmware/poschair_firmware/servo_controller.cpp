@@ -8,12 +8,13 @@ void ServoController::begin() {
     _target[i]  = NEUTRAL_ANGLE;
     _writePulse(i, NEUTRAL_ANGLE);
   }
-  delay(500); // let servos reach neutral before anything else
+  delay(500);
+  Serial.println("[Servo] All 6 channels initialised to neutral");
 }
 
 void ServoController::setTarget(int idx, uint8_t angleDeg) {
   if (idx < 0 || idx >= NUM_SERVOS) return;
-  if (angleDeg > MAX_SAFE_ANGLE) angleDeg = MAX_SAFE_ANGLE;
+  if (angleDeg > MAX_SAFE_ANGLE) angleDeg = MAX_SAFE_ANGLE;  // hard clamp, always
   _target[idx] = angleDeg;
 }
 
@@ -23,11 +24,10 @@ void ServoController::update() {
   _lastUpdateMs = now;
 
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (_current[i] < _target[i]) {
+    if (_current[i] < _target[i])
       _current[i] = min((int)_target[i], (int)_current[i] + SERVO_STEP_DEG);
-    } else if (_current[i] > _target[i]) {
+    else if (_current[i] > _target[i])
       _current[i] = max((int)_target[i], (int)_current[i] - SERVO_STEP_DEG);
-    }
     _writePulse(i, _current[i]);
   }
 }

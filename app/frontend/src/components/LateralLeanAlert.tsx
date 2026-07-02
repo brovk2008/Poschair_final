@@ -33,7 +33,7 @@ export const LateralLeanAlert: React.FC<LateralLeanAlertProps> = ({ posture }) =
       <div style={{ flex: 1, fontSize: '13px' }}>
         <strong style={{ display: 'block', marginBottom: '2px' }}>Lateral Asymmetry Detected</strong>
         <span>
-          You are leaning to the <strong>{direction}</strong>. The chair's single-column mechanical spine corrects forward slouching. Please center your shoulders manually.
+          You are leaning to the <strong>{direction}</strong>. The 2×3 paraspinal grid is actively correcting your lateral posture. Sit back and let the opposing actuators re-centre you!
         </span>
       </div>
 
