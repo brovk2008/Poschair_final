@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, CheckCircle } from 'lucide-react';
 import { PostureData, CalibrationBaseline } from '../postureAnalyzer';
 import { LandmarkList } from '../poseDetector';
 

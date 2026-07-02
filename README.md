@@ -1,5 +1,9 @@
 # PosChair — AI Posture-Correcting Spine Corrector
 
+[![Latest Release](https://img.shields.io/github/v/release/brovk2008/Poschair_final?label=download&color=5c8aff)](https://github.com/brovk2008/Poschair_final/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
+[![Website](https://img.shields.io/badge/website-poschair.vercel.app-gray)](https://poschair.vercel.app)
+
 PosChair is an AI-powered posture-correcting chair attachment that bridges a **digital spine** (pose-tracking camera analysis) and a **mechanical spine** (6× servo-driven spring-steel modules).
 
 ---

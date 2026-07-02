@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react';
-import { PostureData, isLateralLean, lateralLeanDirection } from '../postureAnalyzer';
+import { PostureData } from '../postureAnalyzer';
+import { isLateralLean, lateralLeanDirection } from '../decisionEngine';
 
 interface LateralLeanAlertProps {
   posture: PostureData | null;

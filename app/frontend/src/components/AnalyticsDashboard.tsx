@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, TrendingUp, Calendar } from 'lucide-react';
+import { TrendingUp, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, BarChart, Bar, Tooltip } from 'recharts';
 
 interface AnalyticsDashboardProps {

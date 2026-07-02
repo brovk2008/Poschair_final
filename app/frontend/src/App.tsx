@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Bluetooth, RefreshCw, Activity, Award, Sliders, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Bluetooth, RefreshCw, Activity, Sliders } from 'lucide-react';
 import { createBLEManager, StatusData } from './bleManager';
 import { LandmarkList } from './poseDetector';
 import { analyzePose, CalibrationBaseline, PostureData } from './postureAnalyzer';
-import { computeTargetAngles, isLateralLean, Mode } from './decisionEngine';
+import { computeTargetAngles, Mode } from './decisionEngine';
 import { 
   getProfile, 
   createProfile, 
@@ -159,7 +159,6 @@ export default function App() {
       return;
     }
 
-    const duration = Math.round((Date.now() - sessionStartTime) / 1000);
     const scores = sessionScoreHistory.map(h => h.score);
     const avgScore = scores.reduce((s, val) => s + val, 0) / scores.length;
     const goodCount = scores.filter(s => s >= 75).length;
