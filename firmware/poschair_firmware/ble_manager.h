@@ -2,16 +2,16 @@
 #include <NimBLEDevice.h>
 #include "config.h"
 #include "protocol.h"
-#include "servo_controller.h"
+#include "motor_controller.h"
 
 class BLEManager {
 public:
-  void begin(ServoController* sc);
-  void sendStatus(uint16_t batteryMv, bool failsafeActive);
+  void begin(MotorController* controller);
+  void sendStatus(bool failsafeActive);
   unsigned long lastValidPacketMs() const { return _lastPacketMs; }
   bool isConnected() const;
 
-  ServoController* _sc = nullptr;          // public for callback access
+  MotorController* _controller = nullptr;
 
 private:
   NimBLECharacteristic* _statusChar = nullptr;

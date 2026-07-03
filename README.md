@@ -1,53 +1,197 @@
-# PosChair — AI Posture-Correcting Chair Attachment (V2)
+# PosChair
+
+AI-assisted posture correction hardware for chairs, built around a browser vision loop, BLE control, and a 2x3 paraspinal actuator grid.
 
 [![Latest Release](https://img.shields.io/github/v/release/brovk2008/Poschair_final?label=download&color=5c8aff)](https://github.com/brovk2008/Poschair_final/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
 [![Website](https://img.shields.io/badge/website-poschair--comfort.vercel.app-gray)](https://poschair-comfort.vercel.app)
 
-PosChair is an open-source, closed-loop posture correction system. It tracks your spine in real time using a standard webcam and automatically pushes dynamic corrective adjustments to a 2×3 paraspinal mechanical actuator grid on your chair via Bluetooth Low Energy (BLE).
+PosChair tracks posture locally with MediaPipe Pose, converts posture deviation into six linear actuator targets, and sends those commands to an ESP32-C3 over Bluetooth Low Energy. The v3 hardware uses DC geared motors, BTS7960 H-bridge drivers, and custom worm-rack actuators that move foam pads up to 100mm.
 
----
+## Current Version
 
-## ⚡ System Flow
+**V3 motorized actuator architecture**
 
+- 6 custom worm-rack actuators in a 2x3 paraspinal grid
+- 6 BTS7960 H-bridge motor drivers
+- ESP32-C3 BLE peripheral using NimBLE-Arduino
+- Web Bluetooth dashboard for Chrome/Edge
+- Local-only camera posture analysis with MediaPipe WASM
+- FastAPI backend for profile, calibration, and session history
+
+## Architecture
+
+```text
+Camera
+  -> MediaPipe Pose running in browser
+  -> Posture analyzer
+  -> Velocity-aware decision engine
+  -> Web Bluetooth command packet
+  -> ESP32-C3
+  -> 6x BTS7960 H-bridges
+  -> DC geared motors
+  -> Worm-rack actuators
+  -> Foam pads on paraspinal muscles
 ```
-Camera (webcam) ──[MediaPipe Pose]──> Posture Analyser ──[BLE]──> ESP32-C3 ──► PCA9685 ──► 2×3 Paraspinal Actuators
+
+## Hardware Layout
+
+```text
+        LEFT COLUMN      RIGHT COLUMN
+
+ROW 1:  [UL - M0]       [UR - M1]    Upper thoracic / shoulder
+ROW 2:  [ML - M2]       [MR - M3]    Mid lumbar
+ROW 3:  [LL - M4]       [LR - M5]    Lower lumbar / pelvis
 ```
 
----
+The center spine line is intentionally left open. The modules press into paraspinal muscle areas on either side of the spine.
 
-## 🌟 Core Features (V2 Specification)
+## Features
 
-* **2×3 Paraspinal Actuator Grid**: 6 mechanical servos divided into two independent vertical columns (Left + Right × Upper + Mid + Bottom). Supports paraspinal muscle lines instead of sitting directly on the spine.
-* **Active Left/Right Correction**: Automatically measures lateral tilt. If leaning right, the decision engine applies counter-tension to the left column to re-align your posture.
-* **Pre-Curved Bow Mechanics**: Combines 0.9mm tempered spring steel with stock servo horn cable winding. Rest-state pre-curvature (~20mm) minimizes necessary servo travel (capped at 55° max safe angle) to optimize battery life and reduce torque requirements.
-* **Local WASM AI Vision**: Runs MediaPipe Pose Landmarker entirely client-side in the browser. Zero camera frames or skeleton logs ever leave your computer.
-* **Failsafe Watchdog Protection**: The ESP32-C3 firmware returns all servos to flat neutral positions if BLE communications are interrupted for more than 2 seconds.
-* **Preset Correction Modes**: Choose between customized support curves optimized for Office, Study, Gaming, or Relaxing.
+- **Position-based actuation:** command values are 0-100, mapping to 0-100mm of linear pad travel.
+- **Continuous correction:** forward lean and lateral lean are mapped proportionally instead of using only fixed thresholds.
+- **Velocity awareness:** fast posture deterioration increases actuator response before the user fully slouches.
+- **Confidence gating:** low-confidence pose frames hold the previous motor target to avoid mechanical jitter.
+- **Startup homing:** every boot retracts the actuators to the 0mm home position before BLE control begins.
+- **BLE failsafe:** if command packets stop for more than 2 seconds, all modules retract to 0mm.
+- **Privacy-first vision:** raw camera frames stay in the browser.
 
----
+## Repository Structure
 
-## 🚀 30-Second Quick Start
+```text
+firmware/
+  poschair_firmware/      Main ESP32-C3 BLE + motor control firmware
+  poschair_motor_test/    Motor calibration and wiring test sketch
 
-### 1. Assemble Hardware
-Connect the **ESP32-C3 Mini** via I2C (SDA=GPIO8, SCL=GPIO9) to the **PCA9685 driver**. Connect **6× mechanical grid servos** to channels 0-5.
-*(See detailed layout configurations in [hardware_wiring.md](file:///c:/Users/techp/Downloads/more%20projects/poschair_final/docs/hardware_wiring.md))*
+app/
+  frontend/               React + Vite dashboard with Web Bluetooth
+  backend/                FastAPI backend for profiles, calibration, sessions
+  docker-compose.yml      Local full-stack development environment
 
-### 2. Flash Firmware
-Open `firmware/poschair_firmware/poschair_firmware.ino` in the **Arduino IDE 2.x**. Connect the ESP32-C3 and click **Upload**.
-*(Target Board: ESP32C3 Dev Module · Enable "USB CDC On Boot")*
+docs/
+  hardware_wiring.md      BTS7960, ESP32-C3, and actuator wiring reference
+  protocol.md             BLE packet protocol reference
 
-### 3. Run Dashboard App
-From the `app/` folder, spin up the Docker-composed local dashboard:
+website/                  Public Next.js marketing/documentation site
+```
+
+## Quick Start
+
+### 1. Wire the Hardware
+
+Connect each BTS7960 driver to the ESP32-C3 using the pin map in [docs/hardware_wiring.md](docs/hardware_wiring.md). Use a separate motor power rail sized for your motors and keep all grounds common.
+
+Do not power the DC motors from the ESP32 or USB.
+
+### 2. Calibrate Motor Speed
+
+Flash the motor test sketch:
+
+```text
+firmware/poschair_motor_test/poschair_motor_test.ino
+```
+
+Measure how far each actuator moves during the 2000ms extension test.
+
+```text
+MOTOR_SPEED_MM_PER_MS = measured_mm / 2000.0
+```
+
+Update the value in:
+
+```text
+firmware/poschair_firmware/config.h
+```
+
+### 3. Flash Main Firmware
+
+Open the main sketch in Arduino IDE 2.x:
+
+```text
+firmware/poschair_firmware/poschair_firmware.ino
+```
+
+Recommended Arduino settings:
+
+- Board: `ESP32C3 Dev Module`
+- USB CDC On Boot: `Enabled`
+- Flash Size: `4MB`
+- CPU Frequency: `160MHz`
+- Library: `NimBLE-Arduino`
+
+### 4. Run the App
+
 ```bash
+cd app
 docker-compose up --build
 ```
-Open **[http://localhost:5173](http://localhost:5173)** in Chrome or Edge, click **Connect Chair**, and sit down.
 
----
+Open [http://localhost:5173](http://localhost:5173) in Chrome or Edge.
 
-## 🛠️ Diagnostics & Troubleshooting
+Web Bluetooth is required, so Safari/iOS and Firefox are not supported for hardware control.
 
-* **Brownout Resets**: If the ESP32 resets when the servos begin moving, your power supply is insufficient. Ensure the servos are powered by a separate, dedicated **5V/3A+ external power supply** (not the USB line).
-* **Web Bluetooth API**: Make sure to use Chrome or Edge. iOS Safari and Firefox do not support Web Bluetooth.
-* **Diagnostics Sweep**: Flash [poschair_servo_test.ino](file:///c:/Users/techp/Downloads/more%20projects/poschair_final/firmware/poschair_servo_test/poschair_servo_test.ino) to verify physical servo wiring and ranges before running the main closed-loop software.
+## BLE Protocol
+
+Device name:
+
+```text
+POSCHAIR_001
+```
+
+Command packet, app to ESP32:
+
+```text
+[0]   0xA5
+[1]   UL position 0-100
+[2]   UR position 0-100
+[3]   ML position 0-100
+[4]   MR position 0-100
+[5]   LL position 0-100
+[6]   LR position 0-100
+[7]   XOR checksum of bytes 0-6
+```
+
+Status packet, ESP32 to app:
+
+```text
+[0]   0x5A
+[1]   flags: bit0=ok, bit1=failsafe, bit2=homed, bit3=moving
+[2]   reserved
+[3]   reserved
+[4-9] current module positions, UL through LR
+```
+
+See [docs/protocol.md](docs/protocol.md) for UUIDs and test packets.
+
+## Development Commands
+
+Frontend dashboard:
+
+```bash
+cd app/frontend
+npm run build
+```
+
+Website:
+
+```bash
+cd website
+npm run build
+```
+
+Full local stack:
+
+```bash
+cd app
+docker-compose up --build
+```
+
+## Safety Notes
+
+This project controls physical hardware. Use conservative travel limits, soft foam padding, current-appropriate wiring, and a separate motor power supply. Test one module at a time before wearing or leaning against the full chair attachment.
+
+The firmware clamps commanded travel to 100mm and retracts on BLE timeout, but mechanical end stops and careful power design are still required.
+
+## Status
+
+V3 implementation is active. The app and website builds pass locally. Firmware should be compiled and flashed through Arduino IDE after installing NimBLE-Arduino and selecting the ESP32-C3 board package.

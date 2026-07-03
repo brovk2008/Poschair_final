@@ -2,56 +2,62 @@
 
 BLEManager bleManager;
 
-class ServerCB : public NimBLEServerCallbacks {
-  void onConnect(NimBLEServer* s) override {
+class ServerCallbacks : public NimBLEServerCallbacks {
+  void onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) override {
     Serial.println("[BLE] Client connected");
   }
-  void onDisconnect(NimBLEServer* s) override {
-    Serial.println("[BLE] Client disconnected — restarting advertising");
+
+  void onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) override {
+    Serial.println("[BLE] Client disconnected - restarting advertising");
     NimBLEDevice::getAdvertising()->start();
   }
 };
 
-// Expose timestamp update: CmdCallback sets it via a free function
 static unsigned long* gLastPacketMs = nullptr;
-void ble_markPacketReceived() { if (gLastPacketMs) *gLastPacketMs = millis(); }
+static void markPacketReceived() {
+  if (gLastPacketMs) *gLastPacketMs = millis();
+}
 
-class CmdCallbackFull : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* c) override {
-    std::string val = c->getValue();
-    CommandPacket pkt;
-    if (!parseCommand((const uint8_t*)val.data(), val.length(), pkt)) {
-      Serial.println("[BLE] Bad packet — dropped");
+class CommandCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo& connInfo) override {
+    std::string value = characteristic->getValue();
+    CommandPacket packet;
+
+    if (!parseCommand((const uint8_t*)value.data(), value.length(), packet)) {
+      Serial.println("[BLE] Bad command packet - dropped");
       return;
     }
-    for (int i = 0; i < 6; i++) bleManager._sc->setTarget(i, pkt.angles[i]);
-    ble_markPacketReceived();
+
+    for (int i = 0; i < NUM_MODULES; i++) {
+      bleManager._controller->setTarget(i, packet.positions[i]);
+    }
+    markPacketReceived();
   }
 };
 
-void BLEManager::begin(ServoController* sc) {
-  _sc = sc;
+void BLEManager::begin(MotorController* controller) {
+  _controller = controller;
   _lastPacketMs = millis();
   gLastPacketMs = &_lastPacketMs;
 
   NimBLEDevice::init(BLE_DEVICE_NAME);
   _server = NimBLEDevice::createServer();
-  _server->setCallbacks(new ServerCB());
+  _server->setCallbacks(new ServerCallbacks());
 
-  NimBLEService* svc = _server->createService(SERVICE_UUID);
+  NimBLEService* service = _server->createService(SERVICE_UUID);
 
-  NimBLECharacteristic* cmdChar = svc->createCharacteristic(
+  NimBLECharacteristic* commandChar = service->createCharacteristic(
     COMMAND_CHAR_UUID,
     NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR
   );
-  cmdChar->setCallbacks(new CmdCallbackFull());
+  commandChar->setCallbacks(new CommandCallbacks());
 
-  _statusChar = svc->createCharacteristic(
+  _statusChar = service->createCharacteristic(
     STATUS_CHAR_UUID,
     NIMBLE_PROPERTY::NOTIFY
   );
 
-  svc->start();
+  service->start();
   NimBLEDevice::getAdvertising()->addServiceUUID(SERVICE_UUID);
   NimBLEDevice::getAdvertising()->start();
   Serial.println("[BLE] Advertising as " BLE_DEVICE_NAME);
@@ -61,18 +67,22 @@ bool BLEManager::isConnected() const {
   return _server && _server->getConnectedCount() > 0;
 }
 
-void BLEManager::sendStatus(uint16_t batteryMv, bool failsafeActive) {
-  if (!_statusChar) return;
-  uint8_t flags = 0x01;
-  if (failsafeActive)  flags |= 0x02;
-  if (isConnected())   flags |= 0x04;
+void BLEManager::sendStatus(bool failsafeActive) {
+  if (!_statusChar || !_controller) return;
 
-  uint8_t payload[STATUS_PACKET_SIZE];
+  uint8_t flags = 0x01;
+  if (failsafeActive) flags |= 0x02;
+  if (_controller->isHomingComplete()) flags |= 0x04;
+  if (_controller->isAnyMoving()) flags |= 0x08;
+
+  uint8_t payload[STATUS_PACKET_SIZE] = {0};
   payload[0] = STATUS_HEADER;
   payload[1] = flags;
-  payload[2] = (batteryMv >> 8) & 0xFF;  // big-endian
-  payload[3] = batteryMv & 0xFF;
-  for (int i = 0; i < 6; i++) payload[4 + i] = _sc->getCurrentAngle(i);
+  payload[2] = 0x00;
+  payload[3] = 0x00;
+  for (int i = 0; i < NUM_MODULES; i++) {
+    payload[4 + i] = _controller->getCurrentPosition(i);
+  }
 
   _statusChar->setValue(payload, STATUS_PACKET_SIZE);
   _statusChar->notify();

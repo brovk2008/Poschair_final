@@ -2,8 +2,8 @@ import React from 'react'
 
 const features = [
   {
-    title: "2×3 Paraspinal Actuator Grid",
-    desc: "Two independent columns of three servo-driven spring-steel modules adjust dynamically to target paraspinal muscle lines and correct lateral asymmetry."
+    title: "2x3 Paraspinal Actuator Grid",
+    desc: "Two independent columns of three worm-rack modules push foam pads into paraspinal muscle lines and correct lateral asymmetry."
   },
   {
     title: "On-device AI Pose Analysis",
@@ -11,19 +11,19 @@ const features = [
   },
   {
     title: "Zero-latency BLE Connection",
-    desc: "Communicates using standard Web Bluetooth API writing packed binary payloads directly to the ESP32-C3 microcontroller."
+    desc: "Communicates using standard Web Bluetooth API writing packed 8-byte position payloads directly to the ESP32-C3 microcontroller."
   },
   {
     title: "Automatic Failsafe Watchdog",
-    desc: "If the connection is interrupted or the browser tab closes, all servos return to flat neutral state within 2 seconds."
+    desc: "If the connection is interrupted or the browser tab closes, all motors retract to the 0mm home position within 2 seconds."
   },
   {
-    title: "Presets & Mode Easing",
-    desc: "Features customized support curves optimized for Office, Study, Gaming, or Relaxing, applying smooth 50Hz linear easing."
+    title: "Position-based Correction",
+    desc: "Mode curves output continuous 0-100mm targets with confidence gating and velocity-aware posture anticipation."
   },
   {
     title: "Local Session Analytics",
-    desc: "Saves calibration baselines and scores history locally in PostgreSQL to analyze weekly posture summaries."
+    desc: "Saves calibration baselines and score history locally in PostgreSQL to analyze weekly posture summaries."
   }
 ]
 

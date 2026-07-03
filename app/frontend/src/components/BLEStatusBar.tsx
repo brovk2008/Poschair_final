@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusData } from '../bleManager';
-import { Shield, ShieldAlert, Cpu } from 'lucide-react';
+import { CheckCircle2, Cpu, Loader2, Shield, ShieldAlert, XCircle } from 'lucide-react';
 
 interface BLEStatusBarProps {
   bleConnected: boolean;
@@ -11,65 +11,61 @@ interface BLEStatusBarProps {
 export const BLEStatusBar: React.FC<BLEStatusBarProps> = ({
   bleConnected,
   bleStatus,
-  lastPacketTime
+  lastPacketTime,
 }) => {
-  const failsafeActive = bleStatus ? (bleStatus.flags & 0x02) !== 0 : false;
-  
   return (
-    <footer 
-      className="glass-panel" 
-      style={{ 
-        marginTop: '24px', 
-        padding: '12px 24px', 
+    <footer
+      className="glass-panel"
+      style={{
+        marginTop: '24px',
+        padding: '12px 24px',
         borderRadius: '12px',
-        display: 'flex', 
-        justifyContent: 'space-between', 
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         fontSize: '12px',
-        color: 'var(--text-secondary)'
+        color: 'var(--text-secondary)',
+        gap: '18px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        
-        {/* Connection status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Cpu size={14} style={{ color: bleConnected ? 'var(--accent-cyan)' : 'var(--text-muted)' }} />
-          <span>Hardware: {bleConnected ? "Online" : "Offline"}</span>
-        </div>
+          Hardware: {bleConnected ? 'Connected' : 'Disconnected'}
+        </span>
 
-        {/* Failsafe warning info */}
-        {bleConnected && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: failsafeActive ? 'var(--accent-red)' : 'var(--accent-green)' }}>
-            {failsafeActive ? (
-              <>
-                <ShieldAlert size={14} className="pulsing-glow" />
-                <span>Watchdog Active (Neutral)</span>
-              </>
-            ) : (
-              <>
-                <Shield size={14} />
-                <span>Failsafe Guard Active</span>
-              </>
-            )}
-          </div>
+        {bleConnected && bleStatus && (
+          <>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: bleStatus.isHomed ? 'var(--accent-green)' : 'var(--accent-orange)' }}>
+              {bleStatus.isHomed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+              {bleStatus.isHomed ? 'Homed' : 'Not Homed'}
+            </span>
+
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: bleStatus.isMoving ? 'var(--accent-cyan)' : 'var(--text-secondary)' }}>
+              {bleStatus.isMoving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+              Moving: {bleStatus.isMoving ? 'Yes' : 'No'}
+            </span>
+
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: bleStatus.isFailsafe ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+              {bleStatus.isFailsafe ? <ShieldAlert size={14} className="pulsing-glow" /> : <Shield size={14} />}
+              {bleStatus.isFailsafe ? 'Failsafe Active' : 'Failsafe Armed'}
+            </span>
+          </>
         )}
-
       </div>
 
-      {/* Packet info and angles */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {lastPacketTime && (
           <span>
-            Last Tx: {new Date(lastPacketTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            Last Status: {new Date(lastPacketTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
         )}
         {bleStatus && (
           <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-            ESP32 Feedback: [{bleStatus.currentAngles.join(', ')}]
+            Positions: [{bleStatus.currentPositions.join(', ')}]
           </span>
         )}
       </div>
-      
     </footer>
   );
 };

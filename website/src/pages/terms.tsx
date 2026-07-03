@@ -27,7 +27,7 @@ export default function Terms() {
         </Section>
 
         <Section title="2. Use at your own risk">
-          <p>PosChair involves physical servo-driven hardware attached to a chair. Improper setup, hardware failure, or software bugs could cause unexpected movement. You are solely responsible for safe installation, use, and supervision of the hardware. The project maintainers accept no liability for personal injury, property damage, or any other harm arising from use of this software or hardware.</p>
+          <p>PosChair involves physical motor-driven hardware attached to a chair. Improper setup, hardware failure, or software bugs could cause unexpected movement. You are solely responsible for safe installation, use, and supervision of the hardware. The project maintainers accept no liability for personal injury, property damage, or any other harm arising from use of this software or hardware.</p>
         </Section>
 
         <Section title="3. Open-source license">

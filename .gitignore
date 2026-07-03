@@ -26,3 +26,7 @@ Thumbs.db
 
 # Log files
 *.log
+
+# Local generated/reference files
+chat_history.md
+chain block design.png

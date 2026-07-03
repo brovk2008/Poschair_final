@@ -11,7 +11,7 @@ export default function Home() {
     <>
       <Head>
         <title>PosChair — AI Posture Correction for Your Chair</title>
-        <meta name="description" content="Open-source AI posture correction. Camera detects slouching, servo-driven chair attachment corrects it in real time." />
+        <meta name="description" content="Open-source AI posture correction. Camera detects slouching, motor-driven chair attachment corrects it in real time." />
         <meta property="og:image" content="/og-image.png" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>

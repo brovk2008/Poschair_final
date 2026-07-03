@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Bluetooth, RefreshCw, Activity, Sliders, Eye, Cpu } from 'lucide-react';
 import { createBLEManager, StatusData } from './bleManager';
 import { LandmarkList } from './poseDetector';
 import { analyzePose, CalibrationBaseline, PostureData } from './postureAnalyzer';
-import { computeTargetAngles, Mode } from './decisionEngine';
+import { CONFIDENCE_THRESHOLD, computeTargetPositions, Mode } from './decisionEngine';
 import { 
   getProfile, 
   createProfile, 
@@ -40,7 +40,7 @@ export default function App() {
   const [calibrating, setCalibrating] = useState(false);
   const [baseline, setBaseline] = useState<CalibrationBaseline | null>(null);
   const [latestPosture, setLatestPosture] = useState<PostureData | null>(null);
-  const [targetAngles, setTargetAngles] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  const [targetPositions, setTargetPositions] = useState<number[]>([0, 0, 0, 0, 0, 0]);
   const [currentLandmarks, setCurrentLandmarks] = useState<LandmarkList | null>(null);
 
   // Session stats
@@ -97,23 +97,22 @@ export default function App() {
 
   // Frame processing
   const lastSendTime = useRef<number>(0);
-  const handleLandmarks = (landmarks: LandmarkList) => {
+  const handleLandmarks = useCallback((landmarks: LandmarkList) => {
     setCurrentLandmarks(landmarks);
     
     // Analyze pose relative to baseline
     const posture = analyzePose(landmarks, baseline);
     setLatestPosture(posture);
 
-    // Compute target angles for the 6 actuators
-    const angles = computeTargetAngles(posture, mode);
-    setTargetAngles(angles);
+    const positions = computeTargetPositions(posture, mode);
+    setTargetPositions(positions);
 
     // Throttled BLE send (Only transmits to ESP32 if trackingMode is 'both')
     const now = Date.now();
     if (now - lastSendTime.current >= 100) {
       lastSendTime.current = now;
-      if (bleConnected && trackingMode === 'both') {
-        bleManager.sendAngles(angles);
+      if (bleConnected && trackingMode === 'both' && posture.confidence >= CONFIDENCE_THRESHOLD) {
+        bleManager.sendPositions(positions);
       }
     }
 
@@ -124,7 +123,7 @@ export default function App() {
         return next.slice(-60); // Keep last 60 samples
       });
     }
-  };
+  }, [baseline, bleConnected, bleManager, mode, sessionStartTime, trackingMode]);
 
   const handleCalibrated = async (newBaseline: CalibrationBaseline) => {
     setBaseline(newBaseline);
@@ -180,20 +179,25 @@ export default function App() {
 
     setSessionStartTime(null);
     setSessionScoreHistory([]);
-    setTargetAngles([0, 0, 0, 0, 0, 0]);
+    setTargetPositions([0, 0, 0, 0, 0, 0]);
     if (bleConnected && trackingMode === 'both') {
-      bleManager.sendAngles([0, 0, 0, 0, 0, 0]);
+      bleManager.sendPositions([0, 0, 0, 0, 0, 0]);
     }
   };
 
-  const handleManualAngleChange = (idx: number, val: number) => {
-    const next = [...targetAngles];
+  const handleManualPositionChange = (idx: number, val: number) => {
+    const next = [...targetPositions];
     next[idx] = val;
-    setTargetAngles(next);
+    setTargetPositions(next);
     if (bleConnected && trackingMode === 'both') {
-      bleManager.sendAngles(next);
+      bleManager.sendPositions(next);
     }
   };
+
+  const confidencePct = latestPosture ? Math.round(latestPosture.confidence * 100) : 0;
+  const confidenceColor = confidencePct >= 65 ? 'var(--accent-green)' : confidencePct >= 40 ? 'var(--accent-orange)' : 'var(--accent-red)';
+  const spineVelocity = latestPosture?.velocitySpine ?? 0;
+  const velocityColor = spineVelocity > 3 ? 'var(--accent-red)' : spineVelocity < -1 ? 'var(--accent-green)' : 'var(--text-secondary)';
 
   return (
     <div style={{ paddingBottom: '60px' }}>
@@ -210,13 +214,6 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Battery Status */}
-          {bleConnected && bleStatus && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', background: 'rgba(255,255,255,0.02)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--color-border)' }}>
-              <span style={{ color: 'var(--accent-green)' }}>Battery: {Math.max(0, Math.min(100, Math.round(((bleStatus.batteryMv - 3000) / 1200) * 100)))}%</span>
-            </div>
-          )}
-
           {/* Connect button */}
           <button onClick={toggleBLE} className={`btn ${bleConnected ? 'btn-success' : 'btn-secondary'}`} disabled={isBleConnecting}>
             {isBleConnecting ? (
@@ -247,6 +244,32 @@ export default function App() {
           />
 
           <LateralLeanAlert posture={latestPosture} />
+
+          {latestPosture && (
+            <div className="glass-panel" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  <span>Detection Confidence</span>
+                  <strong style={{ color: confidenceColor }}>{confidencePct}%</strong>
+                </div>
+                <div style={{ height: '8px', borderRadius: '4px', background: 'var(--bg-dark)', overflow: 'hidden' }}>
+                  <div style={{ width: `${confidencePct}%`, height: '100%', background: confidenceColor, transition: 'width 0.2s ease' }} />
+                </div>
+                {latestPosture.confidence < 0.4 && (
+                  <span style={{ color: 'var(--accent-red)', fontSize: '12px' }}>
+                    Low detection confidence - move camera closer or improve lighting.
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                <span>Spine Velocity</span>
+                <strong style={{ color: velocityColor, fontSize: '18px' }}>
+                  {spineVelocity >= 0 ? '+' : ''}{spineVelocity.toFixed(1)} deg/s
+                </strong>
+              </div>
+            </div>
+          )}
 
           {/* Calibration & Session Clock Controls */}
           <div className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -283,8 +306,10 @@ export default function App() {
         <div className="col-4" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           <SpineVisualizer 
-            targetAngles={targetAngles} 
-            currentAngles={bleConnected && bleStatus ? bleStatus.currentAngles : targetAngles} 
+            targetPositions={targetPositions} 
+            currentPositions={bleConnected && bleStatus ? bleStatus.currentPositions : targetPositions}
+            isHomed={bleStatus?.isHomed ?? false}
+            isMoving={bleStatus?.isMoving ?? false}
           />
 
           <ModeSelector 
@@ -347,17 +372,17 @@ export default function App() {
             <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
                 <Sliders size={18} style={{ color: 'var(--accent-cyan)' }} />
-                Manual Servos Command
+                Manual Position Command
               </h3>
               {[0, 1, 2, 3, 4, 5].map((idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Module {idx + 1} angle</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Module {idx + 1} position: {targetPositions[idx] || 0}mm</span>
                   <input 
                     type="range" 
                     min="0" 
-                    max="70" 
-                    value={targetAngles[idx] || 0}
-                    onChange={(e) => handleManualAngleChange(idx, parseInt(e.target.value))}
+                    max="100" 
+                    value={targetPositions[idx] || 0}
+                    onChange={(e) => handleManualPositionChange(idx, parseInt(e.target.value))}
                     className="custom-range" 
                   />
                 </div>

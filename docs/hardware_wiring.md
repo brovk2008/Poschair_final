@@ -1,97 +1,87 @@
-# PosChair Hardware Wiring Diagram (V2)
+# PosChair Hardware Wiring Diagram (V3)
 
-This document details the wiring layout, physical pin mappings, and grid configurations for the PosChair posture-correcting chair attachment.
+V3 uses six BTS7960 H-bridge motor drivers. Each module is a DC geared motor driving a worm-rack actuator and foam pad.
 
----
+## System Topology
 
-## 1. System Topology
+```text
+12V motor battery + -----> BTS7960 B+ pins
+12V motor battery - -----> BTS7960 B- pins ----+
+                                                |
+ESP32-C3 GND ----------------------------------+
 
-```
-                  [External 5V Battery Pack]
-                       |             |
-                       +-(+5V)       +-(GND)
-                       |             |
-                       v [V+]        v [GND]
-                 +-----------------------+
-                 |    PCA9685 Driver     |
-                 | (Servo Power Terminal)|
-                 +-----------------------+
-                             |
-         +-------------------+-------------------+
-         | (SDA)             | (SCL)             | (GND)
-         v                   v                   v
-+-----------------+   +----------------------------------+
-|    ESP32-C3     |   |          PCA9685 Board           |
-| (Control Unit)  |   |           (VCC Pin)              |
-|                 |   |                                  |
-|   GPIO 8 (SDA)  |-->| SDA Pin                          |
-|   GPIO 9 (SCL)  |-->| SCL Pin                          |
-|   GND           |<--| GND Pin                          |
-|   3.3V / 5V     |-->| VCC Pin (Logic Power)            |
-+-----------------+   +----------------------------------+
-                               |
-        +----------------------+-----------------------+
-        |                      |                       |
-        v (Ch 0)               v (Ch 1)                v (Ch 5)
-+---------------+      +---------------+       +---------------+
-| UL Servo (CH0)|      | UR Servo (CH1)|  ...  | LR Servo (CH5)|
-+---------------+      +---------------+       +---------------+
+ESP32-C3 PWM pins -> BTS7960 RPWM/LPWM pins -> DC motors -> worm-rack actuators
+5V logic rail -----> BTS7960 VCC pins
 ```
 
----
+Use a common ground between ESP32 logic, BTS7960 logic, and motor battery ground.
 
-## 2. Pin Mapping Details
+## 2x3 Module Layout
 
-### 2.1 ESP32-C3 to PCA9685 Logic Connections
+```text
+        LEFT COLUMN      RIGHT COLUMN
 
-| ESP32-C3 Pin | PCA9685 Control Pin | Connection Color (Std) | Description |
-|---|---|---|---|
-| **GPIO 8** | `SDA` | Green | I2C Data Line |
-| **GPIO 9** | `SCL` | Yellow | I2C Clock Line |
-| **GND** | `GND` | Black | Common Logic Ground |
-| **3.3V** | `VCC` | Red | Logic Power Supply (from ESP32 regulator) |
-
-### 2.2 Battery Voltage Divider Connection
-For battery monitoring, wire a voltage divider from your battery pack positive terminal directly to **GPIO 3** (ADC) on the ESP32-C3:
-```
-Battery + ── R1 (100kΩ) ──┬── GPIO 3 (ESP32-C3)
-                          │
-                          └── R2 (100kΩ) ── GND
+ROW 1:  [UL - M0]       [UR - M1]    Upper thoracic / shoulder
+ROW 2:  [ML - M2]       [MR - M3]    Mid lumbar
+ROW 3:  [LL - M4]       [LR - M5]    Lower lumbar / pelvis
 ```
 
-### 2.3 PCA9685 to Servos Pin Mapping (2×3 Grid)
+Keep a 2cm spine gap between the columns so modules press paraspinal muscles, not spinous processes.
 
-| PCA9685 PWM Channel | Actuator ID | Anatomical Location | Grid Row & Column |
-|---|---|---|---|
-| **Channel 0** | `UL` | Upper-Left | Row 1 (Upper), Left Column |
-| **Channel 1** | `UR` | Upper-Right | Row 1 (Upper), Right Column |
-| **Channel 2** | `ML` | Mid-Left | Row 2 (Mid), Left Column |
-| **Channel 3** | `MR` | Mid-Right | Row 2 (Mid), Right Column |
-| **Channel 4** | `LL` | Lower-Left | Row 3 (Lower), Left Column |
-| **Channel 5** | `LR` | Lower-Right | Row 3 (Lower), Right Column |
+## ESP32-C3 Pin Assignment
 
----
+| GPIO | Function | Module |
+|---|---|---|
+| GPIO0 | RPWM | M0 Upper-Left |
+| GPIO1 | LPWM | M0 Upper-Left |
+| GPIO2 | RPWM | M1 Upper-Right |
+| GPIO3 | LPWM | M1 Upper-Right |
+| GPIO4 | RPWM | M2 Mid-Left |
+| GPIO5 | LPWM | M2 Mid-Left |
+| GPIO6 | RPWM | M3 Mid-Right |
+| GPIO7 | LPWM | M3 Mid-Right |
+| GPIO8 | RPWM | M4 Lower-Left |
+| GPIO9 | LPWM | M4 Lower-Left |
+| GPIO10 | RPWM | M5 Lower-Right |
+| GPIO20 | LPWM | M5 Lower-Right |
+| GPIO21 | Shared enable | All BTS7960 R_EN/L_EN |
 
-## 3. Physical Layout Guide
+For a hackathon build, you may tie all BTS7960 `R_EN` and `L_EN` pins HIGH. The firmware also supports the shared `EN_PIN` on GPIO21.
 
-Looking at the chair back from the front (user's perspective):
+## BTS7960 Per-Driver Wiring
+
+| BTS7960 Pin | Connect To | Purpose |
+|---|---|---|
+| RPWM | Assigned ESP32 GPIO | Forward PWM: rack extends, foam pushes out |
+| LPWM | Assigned ESP32 GPIO | Reverse PWM: rack retracts |
+| R_EN | GPIO21 or 5V | Enable right half-bridge |
+| L_EN | GPIO21 or 5V | Enable left half-bridge |
+| VCC | 5V logic | Driver logic power |
+| GND | Common GND | Shared reference |
+| B+ | 6-12V motor battery + | Motor rail |
+| B- | Motor battery GND | Motor rail ground |
+| M+ / M- | DC motor terminals | Output to motor |
+
+## Position Model
+
+- Chain/rack length: 160mm
+- Max commanded travel: 100mm
+- Command units: 0-100 = 0-100mm
+- Normal PWM: 200/255
+- Homing PWM: 150/255
+
+Calibrate with `firmware/poschair_motor_test/poschair_motor_test.ino`:
+
+```text
+MOTOR_SPEED_MM_PER_MS = measured_mm / 2000.0
 ```
-        LEFT COLUMN       RIGHT COLUMN
-        (user's right)    (user's left)
-        
-ROW 1:  [UL - CH0]       [UR - CH1]     ← Upper Thoracic
-ROW 2:  [ML - CH2]       [MR - CH3]     ← Mid Lumbar
-ROW 3:  [LL - CH4]       [LR - CH5]     ← Lower Lumbar / Pelvis
-```
-* **Gap spacing**: Keep a ~2cm gap between the left and right columns to prevent placing modules directly over the spine, supporting the paraspinal muscles on each side.
-* **Travel limit**: The servos are capped at **55°** max safe angle to prevent over-tensioning the pre-curved spring steel bands.
 
----
+Then update `MOTOR_SPEED_MM_PER_MS` in `firmware/poschair_firmware/config.h`.
 
-## 4. Power Distribution Warnings
+## Homing
 
-> [!WARNING]
-> **Servo Current Draw Limits**
-> Do **NOT** power the PCA9685 servo power terminal (`V+` / green screw terminal) using the ESP32's `5V` or `3.3V` out pins. MG996R servos can draw up to 2.5A each under stall conditions. A single peak command could trigger a brown-out reset on the ESP32-C3.
->
-> Ensure there is a **common ground (GND)** connection between the ESP32-C3's GND pins, the PCA9685's logic GND, and the external battery pack's negative terminal to maintain a reference level for I2C and PWM signaling.
+On every power-on, the firmware runs all motors backward for `HOMING_TIMEOUT_MS` to retract the racks and set current position to 0mm. If you add limit switches later, replace the blind timeout with switch-based homing.
+
+## Power Warnings
+
+Do not power the DC motors from the ESP32 or USB. Use a separate motor battery or power supply sized for the stall current of all six motors. Keep the motor rail, BTS7960 logic, and ESP32 logic grounds connected.

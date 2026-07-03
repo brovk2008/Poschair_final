@@ -1,72 +1,72 @@
-# PosChair BLE Protocol Specification
+# PosChair BLE Protocol Specification (V3)
 
-This document defines the binary communication protocol used over Bluetooth Low Energy (BLE) between the PosChair controller (ESP32-C3) and the Client Application.
-
----
+This document defines the binary BLE protocol between the browser app and the ESP32-C3 motor controller.
 
 ## Device Information
 
 - **BLE Device Local Name:** `POSCHAIR_001`
-- **Custom Service UUID:** `a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e`
+- **Service UUID:** `a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e`
+- **Command Characteristic:** `a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e`
+- **Status Characteristic:** `a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e`
 
----
+## Module Order
 
-## BLE Characteristics
+```text
+0 = Upper-Left   (UL)
+1 = Upper-Right  (UR)
+2 = Mid-Left     (ML)
+3 = Mid-Right    (MR)
+4 = Lower-Left   (LL)
+5 = Lower-Right  (LR)
+```
 
-| Name | UUID | Properties | Description |
-|---|---|---|---|
-| **Command (RX)** | `a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e` | `Write` or `Write Without Response` | Send target angles to control the servos |
-| **Status (TX)** | `a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e` | `Notify` | Stream battery voltage and current angles |
+All command and status arrays use this exact order.
 
----
+## Command Packet
 
-## 1. Command Packet (App → ESP32)
-
-- **Size:** 8 bytes
-- **Frequency:** Typically sent up to 10Hz when angles update.
-- **Protocol Format:**
-
-| Byte | Field | Type | Description |
-|---|---|---|---|
-| 0 | Header | `uint8_t` | Constant packet header identifier: `0xA5` |
-| 1 | Servo 1 (Upper thoracic) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 2 | Servo 2 (Lower thoracic) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 3 | Servo 3 (Mid lumbar) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 4 | Servo 4 (Mid lumbar) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 5 | Servo 5 (Lower lumbar) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 6 | Servo 6 (Pelvis) | `uint8_t` | Target angle ($0\degree$ to $180\degree$) |
-| 7 | Checksum | `uint8_t` | XOR combination of bytes 0 through 6 |
-
-### Checksum Logic
-
-The checksum byte is verified using a bitwise XOR operation of the preceding 7 bytes:
-$$\text{Checksum} = B_0 \oplus B_1 \oplus B_2 \oplus B_3 \oplus B_4 \oplus B_5 \oplus B_6$$
-
----
-
-## 2. Status Packet (ESP32 → App)
-
-- **Size:** 10 bytes
-- **Frequency:** Broadcasted via Notify at a rate of 1Hz (every 1000ms), or immediately on change.
-- **Protocol Format:**
+App to ESP32, 8 bytes, write without response. Position units are millimeters.
 
 | Byte | Field | Type | Description |
 |---|---|---|---|
-| 0 | Header | `uint8_t` | Constant packet header identifier: `0x5A` |
-| 1 | Status Flags | `uint8_t` | Bit flags indicating device state:<br>- **Bit 0**: BLE Connection State ($1 = \text{connected}$, $0 = \text{disconnected}$)<br>- **Bit 1**: Failsafe State ($1 = \text{failsafe active}$, $0 = \text{operational}$)<br>- **Bits 2-7**: Reserved |
-| 2–3 | Battery Voltage | `uint16_t` | Battery voltage level in millivolts (`mV`, Big Endian format) |
-| 4 | Servo 1 (Upper thoracic) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
-| 5 | Servo 2 (Lower thoracic) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
-| 6 | Servo 3 (Mid lumbar) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
-| 7 | Servo 4 (Mid lumbar) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
-| 8 | Servo 5 (Lower lumbar) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
-| 9 | Servo 6 (Pelvis) | `uint8_t` | Real-time interpolated angle ($0\degree$ to $180\degree$) |
+| 0 | Header | `uint8_t` | Constant `0xA5` |
+| 1 | UL position | `uint8_t` | 0-100 = 0-100mm |
+| 2 | UR position | `uint8_t` | 0-100 = 0-100mm |
+| 3 | ML position | `uint8_t` | 0-100 = 0-100mm |
+| 4 | MR position | `uint8_t` | 0-100 = 0-100mm |
+| 5 | LL position | `uint8_t` | 0-100 = 0-100mm |
+| 6 | LR position | `uint8_t` | 0-100 = 0-100mm |
+| 7 | Checksum | `uint8_t` | XOR of bytes 0-6 |
 
----
+```text
+checksum = B0 ^ B1 ^ B2 ^ B3 ^ B4 ^ B5 ^ B6
+```
 
-## 3. Watchdog Failsafe Mechanism
+## Status Packet
 
-If the ESP32-C3 is connected via BLE, but **does not receive a valid Command packet for more than 2.0 seconds** (configurable via `FAILSAFE_TIMEOUT_MS`), it will automatically trigger the watchdog failsafe:
-1. Active status flag is updated (Bit 1 set to 1).
-2. Servos are immediately but smoothly returned to their neutral position (`90` degrees by default).
-3. The board ignores manual targets until a new valid command packet is received.
+ESP32 to app, 10 bytes, notify about once per second.
+
+| Byte | Field | Type | Description |
+|---|---|---|---|
+| 0 | Header | `uint8_t` | Constant `0x5A` |
+| 1 | Flags | `uint8_t` | bit0=ok, bit1=failsafe, bit2=homed, bit3=any motor moving |
+| 2 | Reserved | `uint8_t` | `0x00` |
+| 3 | Reserved | `uint8_t` | `0x00` |
+| 4 | UL current position | `uint8_t` | 0-100mm |
+| 5 | UR current position | `uint8_t` | 0-100mm |
+| 6 | ML current position | `uint8_t` | 0-100mm |
+| 7 | MR current position | `uint8_t` | 0-100mm |
+| 8 | LL current position | `uint8_t` | 0-100mm |
+| 9 | LR current position | `uint8_t` | 0-100mm |
+
+## Test Packets
+
+```text
+All retracted:         A5 00 00 00 00 00 00 A5
+ML+MR to 50mm:         A5 00 00 32 32 00 00 E5
+Full left column out:  A5 64 00 64 00 64 00 81
+All fully extended:    A5 64 64 64 64 64 64 C5
+```
+
+## Failsafe
+
+If no valid command packet arrives for more than `FAILSAFE_TIMEOUT_MS` (2000ms), the ESP32 sets the failsafe flag and commands all modules back to 0mm.

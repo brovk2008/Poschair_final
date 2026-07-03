@@ -1,62 +1,53 @@
-// PosChair Firmware v2 — ESP32-C3 Mini
-// 6 servos in 2×3 grid (UL, UR, ML, MR, LL, LR)
-// Pre-curved 65Mn spring steel strips, direct horn winding
+// PosChair Firmware v3 - ESP32-C3 Mini
+// 6 custom worm-rack actuators in 2x3 paraspinal grid.
+// Drivers: 6x BTS7960 H-bridges, one DC geared motor per module.
 //
 // Board: ESP32C3 Dev Module
 // USB CDC On Boot: Enabled
-// Libraries: NimBLE-Arduino, Adafruit PWM Servo Driver
+// Library: NimBLE-Arduino
 
-#include <Wire.h>
 #include "config.h"
 #include "protocol.h"
-#include "servo_controller.h"
+#include "motor_controller.h"
 #include "ble_manager.h"
 
-ServoController servos;
+MotorController motors;
 unsigned long lastStatusMs = 0;
 bool failsafeActive = false;
-
-uint16_t readBatteryMv() {
-  int raw = analogRead(BATTERY_ADC_PIN);
-  return (uint16_t)((raw / (float)BATTERY_ADC_MAX) * BATTERY_REF_MV * BATTERY_DIVIDER);
-}
 
 void setup() {
   Serial.begin(115200);
   delay(200);
-  Serial.println("\n=== PosChair v2 Firmware Starting ===");
-  Serial.println("Layout: UL=CH0 UR=CH1 ML=CH2 MR=CH3 LL=CH4 LR=CH5");
+  Serial.println("\n=== PosChair v3 Firmware Starting ===");
+  Serial.println("Layout: UL=M0 UR=M1 ML=M2 MR=M3 LL=M4 LR=M5");
+  Serial.println("Actuator: BTS7960 + DC motor + worm-rack timed position control");
 
-  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-  servos.begin();
-  servos.playStartupAnimation();
-  bleManager.begin(&servos);
+  motors.begin();
+  motors.homeAll();
+  bleManager.begin(&motors);
 
-  Serial.println("Ready. All modules at neutral (pre-curve resting position).");
+  Serial.println("Ready. Positions are 0-100mm. Advertising as " BLE_DEVICE_NAME ".");
 }
 
 void loop() {
-  servos.update();
+  motors.update();
 
-  // Safety failsafe: BLE silent for >2s → return all to neutral
-  bool timedOut = (millis() - bleManager.lastValidPacketMs() > FAILSAFE_TIMEOUT_MS);
+  const bool timedOut = (millis() - bleManager.lastValidPacketMs() > FAILSAFE_TIMEOUT_MS);
   if (timedOut && !failsafeActive) {
-    Serial.println("WARNING: Failsafe triggered — all modules returning to neutral");
+    Serial.println("WARNING: BLE timeout - retracting all modules to 0mm");
     failsafeActive = true;
+    for (int i = 0; i < NUM_MODULES; i++) motors.setTarget(i, 0);
   }
-  if (timedOut)  servos.goNeutralAll();
   if (!timedOut) failsafeActive = false;
 
-  // Periodic status notify
   if (millis() - lastStatusMs > STATUS_INTERVAL_MS) {
     lastStatusMs = millis();
-    bleManager.sendStatus(readBatteryMv(), failsafeActive);
+    bleManager.sendStatus(failsafeActive);
 
-    // Debug print
-    Serial.printf("[Status] UL=%d UR=%d ML=%d MR=%d LL=%d LR=%d bat=%dmV fs=%d\n",
-      servos.getCurrentAngle(0), servos.getCurrentAngle(1),
-      servos.getCurrentAngle(2), servos.getCurrentAngle(3),
-      servos.getCurrentAngle(4), servos.getCurrentAngle(5),
-      readBatteryMv(), failsafeActive);
+    Serial.printf("[Status] UL=%d UR=%d ML=%d MR=%d LL=%d LR=%d homed=%d moving=%d fs=%d\n",
+      motors.getCurrentPosition(0), motors.getCurrentPosition(1),
+      motors.getCurrentPosition(2), motors.getCurrentPosition(3),
+      motors.getCurrentPosition(4), motors.getCurrentPosition(5),
+      motors.isHomingComplete(), motors.isAnyMoving(), failsafeActive);
   }
 }

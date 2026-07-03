@@ -1,45 +1,38 @@
 #pragma once
+#include <Arduino.h>
 
-// ── I2C ──────────────────────────────────────────────────────────────
-#define I2C_SDA_PIN         8
-#define I2C_SCL_PIN         9
+// Module index map:
+// 0=Upper-Left, 1=Upper-Right, 2=Mid-Left, 3=Mid-Right, 4=Lower-Left, 5=Lower-Right
+#define NUM_MODULES 6
 
-// ── Battery ADC ──────────────────────────────────────────────────────
-#define BATTERY_ADC_PIN     3
-#define BATTERY_ADC_MAX     4095
-#define BATTERY_REF_MV      3300
-#define BATTERY_DIVIDER     2.0f    // R1=R2=100kΩ divider
+// BTS7960 pins. RPWM drives rack out, LPWM drives rack in.
+const uint8_t RPWM_PINS[NUM_MODULES] = {0, 2, 4, 6, 8, 10};
+const uint8_t LPWM_PINS[NUM_MODULES] = {1, 3, 5, 7, 9, 20};
 
-// ── Module index → PCA9685 channel map ───────────────────────────────
-// These MUST match the physical wiring
-#define CH_UPPER_LEFT       0
-#define CH_UPPER_RIGHT      1
-#define CH_MID_LEFT         2
-#define CH_MID_RIGHT        3
-#define CH_LOWER_LEFT       4
-#define CH_LOWER_RIGHT      5
-#define NUM_SERVOS          6
+#define EN_PIN 21
+#define LIMIT_SW_PINS_USED false
 
-// ── Servo pulse width (microseconds) ─────────────────────────────────
-#define SERVO_MIN_PULSE     500     // 0°
-#define SERVO_MAX_PULSE     2500    // 180°
+// Motor PWM settings for ESP32 Arduino core v3 ledcAttach/ledcWrite API.
+#define MOTOR_PWM_NORMAL 200
+#define MOTOR_PWM_HOMING 150
+#define MOTOR_PWM_FREQ 5000
+#define MOTOR_PWM_RES 8
 
-// ── Angle limits ─────────────────────────────────────────────────────
-// Pre-curved strips: 0° = strip at pre-curve resting position (~20mm bulge)
-// 55° = maximum, strip at ~45-50mm bulge. Never exceed.
-#define NEUTRAL_ANGLE       0
-#define MAX_SAFE_ANGLE      55
+// Timed position model: position unit 0-100 maps to 0-100mm extension.
+#define MOTOR_SPEED_MM_PER_MS 0.075f
+#define MAX_POSITION_MM 100
+#define POSITION_UNIT_TO_MM 1.0f
 
-// ── Motion easing ────────────────────────────────────────────────────
-#define SERVO_STEP_DEG      2       // degrees per update tick
-#define SERVO_UPDATE_MS     20      // 50 Hz update rate
-
-// ── BLE ──────────────────────────────────────────────────────────────
-#define BLE_DEVICE_NAME     "POSCHAIR_001"
-#define SERVICE_UUID        "a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e"
-#define COMMAND_CHAR_UUID   "a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e"
-#define STATUS_CHAR_UUID    "a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e"
-
-// ── Timing ───────────────────────────────────────────────────────────
+// Homing and safety.
+#define HOMING_TIMEOUT_MS 3000
+#define HOMING_EXTRA_MS 200
 #define FAILSAFE_TIMEOUT_MS 2000
-#define STATUS_INTERVAL_MS  1000
+#define MIN_POSITION_CHANGE 3
+
+// BLE UUIDs. Must match app/frontend/src/bleManager.ts exactly.
+#define BLE_DEVICE_NAME "POSCHAIR_001"
+#define SERVICE_UUID "a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e"
+#define COMMAND_CHAR_UUID "a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e"
+#define STATUS_CHAR_UUID "a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e"
+
+#define STATUS_INTERVAL_MS 1000

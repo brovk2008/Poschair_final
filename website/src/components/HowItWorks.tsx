@@ -6,28 +6,28 @@ const steps = [
         <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
       </svg>
     ),
-    step:  '01',
+    step: '01',
     title: 'Camera detects posture',
-    desc:  'MediaPipe Pose runs as WebAssembly in the browser. No data leaves your device.',
+    desc: 'MediaPipe Pose runs as WebAssembly in the browser. No data leaves your device.',
   },
   {
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="4" y="4" width="16" height="16" rx="2"/>
         <rect x="9" y="9" width="6" height="6"/>
-        <line x1="9"  y1="1"  x2="9"  y2="4"/>
-        <line x1="15" y1="1"  x2="15" y2="4"/>
-        <line x1="9"  y1="20" x2="9"  y2="23"/>
+        <line x1="9" y1="1" x2="9" y2="4"/>
+        <line x1="15" y1="1" x2="15" y2="4"/>
+        <line x1="9" y1="20" x2="9" y2="23"/>
         <line x1="15" y1="20" x2="15" y2="23"/>
-        <line x1="20" y1="9"  x2="23" y2="9"/>
-        <line x1="20" y1="14"  x2="23" y2="14"/>
-        <line x1="1"  y1="9"  x2="4"  y2="9"/>
-        <line x1="1"  y1="14" x2="4"  y2="14"/>
+        <line x1="20" y1="9" x2="23" y2="9"/>
+        <line x1="20" y1="14" x2="23" y2="14"/>
+        <line x1="1" y1="9" x2="4" y2="9"/>
+        <line x1="1" y1="14" x2="4" y2="14"/>
       </svg>
     ),
-    step:  '02',
-    title: 'Decision engine maps to angles',
-    desc:  'Spine forward and lateral deviations are mapped to 2×3 grid targets based on preset correction modes.',
+    step: '02',
+    title: 'Decision engine maps positions',
+    desc: 'Forward velocity and lateral deviation are mapped to six 0-100mm worm-rack targets.',
   },
   {
     icon: (
@@ -35,9 +35,9 @@ const steps = [
         <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/>
       </svg>
     ),
-    step:  '03',
+    step: '03',
     title: 'BLE sends commands',
-    desc:  'An 8-byte command packet with XOR checksum is sent over Bluetooth Low Energy to the chair hardware.',
+    desc: 'An 8-byte command packet with XOR checksum is sent over Bluetooth Low Energy to the chair hardware.',
   },
   {
     icon: (
@@ -46,9 +46,9 @@ const steps = [
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     ),
-    step:  '04',
-    title: 'Servos correct your posture',
-    desc:  'The 2×3 grid actuates left and right columns independently. Leaning right triggers left-side tension to re-centre you.',
+    step: '04',
+    title: 'Motors correct your posture',
+    desc: 'BTS7960 drivers move worm-rack actuators independently so the opposite column can re-centre lateral lean.',
   },
 ]
 
@@ -65,9 +65,7 @@ export default function HowItWorks() {
             <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 800, marginBottom: '20px', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
               STEP {s.step}
             </div>
-            
-            {/* Clay icon background */}
-            <div style={{ 
+            <div style={{
               background: 'var(--surface-2)',
               boxShadow: 'var(--shadow-btn)',
               width: '48px',
@@ -82,9 +80,8 @@ export default function HowItWorks() {
             }}>
               {s.icon}
             </div>
-            
             <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>{s.title}</h3>
-            <p  style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{s.desc}</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{s.desc}</p>
           </div>
         ))}
       </div>

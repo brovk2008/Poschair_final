@@ -1,40 +1,52 @@
-// BLE UUIDs — must match firmware config.h exactly
-const SERVICE_UUID      = 'a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e';
+const SERVICE_UUID = 'a1b2c3d4-0001-4b5c-8d6e-1f2a3b4c5d6e';
 const COMMAND_CHAR_UUID = 'a1b2c3d4-0002-4b5c-8d6e-1f2a3b4c5d6e';
-const STATUS_CHAR_UUID  = 'a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e';
+const STATUS_CHAR_UUID = 'a1b2c3d4-0003-4b5c-8d6e-1f2a3b4c5d6e';
 
 export interface StatusData {
-  flags: number;           // bit0=ok, bit1=failsafe, bit2=connected
-  batteryMv: number;
-  currentAngles: number[]; // [6]
+  flags: number;
+  currentPositions: number[];
+  isOk: boolean;
+  isFailsafe: boolean;
+  isHomed: boolean;
+  isMoving: boolean;
 }
 
 export interface BLEManager {
   connect(): Promise<void>;
   disconnect(): void;
-  sendAngles(angles: number[]): void;  // angles[6], each 0–70
+  sendPositions(positions: number[]): void;
   isConnected(): boolean;
   onStatus: ((s: StatusData) => void) | null;
   onDisconnect: (() => void) | null;
 }
 
-function buildCommandPacket(angles: number[]): ArrayBuffer {
+function buildCommandPacket(positions: number[]): ArrayBuffer {
   const buf = new Uint8Array(8);
-  buf[0] = 0xA5; // header
-  for (let i = 0; i < 6; i++) buf[i + 1] = Math.min(55, Math.max(0, angles[i]));
-  let cs = 0;
-  for (let i = 0; i < 7; i++) cs ^= buf[i];
-  buf[7] = cs;
+  buf[0] = 0xA5;
+
+  for (let i = 0; i < 6; i++) {
+    buf[i + 1] = Math.min(100, Math.max(0, Math.round(positions[i] ?? 0)));
+  }
+
+  let checksum = 0;
+  for (let i = 0; i < 7; i++) checksum ^= buf[i];
+  buf[7] = checksum;
+
   return buf.buffer;
 }
 
 function parseStatusPacket(buf: DataView): StatusData | null {
   if (buf.byteLength < 10) return null;
   if (buf.getUint8(0) !== 0x5A) return null;
+
+  const flags = buf.getUint8(1);
   return {
-    flags: buf.getUint8(1),
-    batteryMv: buf.getUint16(2, false), // big-endian
-    currentAngles: Array.from({ length: 6 }, (_, i) => buf.getUint8(4 + i)),
+    flags,
+    currentPositions: Array.from({ length: 6 }, (_, i) => buf.getUint8(4 + i)),
+    isOk: Boolean(flags & 0x01),
+    isFailsafe: Boolean(flags & 0x02),
+    isHomed: Boolean(flags & 0x04),
+    isMoving: Boolean(flags & 0x08),
   };
 }
 
@@ -51,18 +63,22 @@ export function createBLEManager(): BLEManager {
         filters: [{ name: 'POSCHAIR_001' }],
         optionalServices: [SERVICE_UUID],
       });
+
       device.addEventListener('gattserverdisconnected', () => {
         cmdChar = null;
         mgr.onDisconnect?.();
       });
-      const server  = await device.gatt!.connect();
+
+      const server = await device.gatt!.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
-      cmdChar       = await service.getCharacteristic(COMMAND_CHAR_UUID);
-      const statCh  = await service.getCharacteristic(STATUS_CHAR_UUID);
-      await statCh.startNotifications();
-      statCh.addEventListener('characteristicvaluechanged', (e) => {
-        const val = (e.target as BluetoothRemoteGATTCharacteristic).value!;
-        const parsed = parseStatusPacket(val);
+      cmdChar = await service.getCharacteristic(COMMAND_CHAR_UUID);
+      const statusChar = await service.getCharacteristic(STATUS_CHAR_UUID);
+
+      await statusChar.startNotifications();
+      statusChar.addEventListener('characteristicvaluechanged', (event) => {
+        const value = (event.target as BluetoothRemoteGATTCharacteristic).value;
+        if (!value) return;
+        const parsed = parseStatusPacket(value);
         if (parsed) mgr.onStatus?.(parsed);
       });
     },
@@ -72,14 +88,15 @@ export function createBLEManager(): BLEManager {
       cmdChar = null;
     },
 
-    sendAngles(angles: number[]) {
+    sendPositions(positions: number[]) {
       if (!cmdChar) return;
-      cmdChar.writeValueWithoutResponse(buildCommandPacket(angles)).catch(console.error);
+      cmdChar.writeValueWithoutResponse(buildCommandPacket(positions)).catch(console.error);
     },
 
     isConnected() {
       return device?.gatt?.connected ?? false;
     },
   };
+
   return mgr;
 }
