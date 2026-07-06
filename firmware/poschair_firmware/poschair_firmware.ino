@@ -1,9 +1,9 @@
-// PosChair Firmware v3 - ESP32-C3 Mini
+// PosChair Firmware v3 - ESP32 DevKit V1
 // 6 custom worm-rack actuators in 2x3 paraspinal grid.
 // Drivers: 6x BTS7960 H-bridges, one DC geared motor per module.
 //
-// Board: ESP32C3 Dev Module
-// USB CDC On Boot: Enabled
+// Board: ESP32 Dev Module
+// CPU Frequency: 240MHz
 // Library: NimBLE-Arduino
 
 #include "config.h"
@@ -14,6 +14,11 @@
 MotorController motors;
 unsigned long lastStatusMs = 0;
 bool failsafeActive = false;
+
+uint16_t readBatteryMv() {
+  int raw = analogRead(BATTERY_ADC_PIN);
+  return (uint16_t)((raw / (float)BATTERY_ADC_MAX) * BATTERY_REF_MV * BATTERY_DIVIDER);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -42,12 +47,13 @@ void loop() {
 
   if (millis() - lastStatusMs > STATUS_INTERVAL_MS) {
     lastStatusMs = millis();
-    bleManager.sendStatus(failsafeActive);
+    const uint16_t batteryMv = readBatteryMv();
+    bleManager.sendStatus(failsafeActive, batteryMv);
 
-    Serial.printf("[Status] UL=%d UR=%d ML=%d MR=%d LL=%d LR=%d homed=%d moving=%d fs=%d\n",
+    Serial.printf("[Status] UL=%d UR=%d ML=%d MR=%d LL=%d LR=%d bat=%dmV homed=%d moving=%d fs=%d\n",
       motors.getCurrentPosition(0), motors.getCurrentPosition(1),
       motors.getCurrentPosition(2), motors.getCurrentPosition(3),
       motors.getCurrentPosition(4), motors.getCurrentPosition(5),
-      motors.isHomingComplete(), motors.isAnyMoving(), failsafeActive);
+      batteryMv, motors.isHomingComplete(), motors.isAnyMoving(), failsafeActive);
   }
 }

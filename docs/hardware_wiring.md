@@ -1,6 +1,6 @@
-# PosChair Hardware Wiring Diagram (V3)
+# PosChair Hardware Wiring Diagram (V3 - ESP32 DevKit V1)
 
-V3 uses six BTS7960 H-bridge motor drivers. Each module is a DC geared motor driving a worm-rack actuator and foam pad.
+V3 uses an ESP32 DevKit V1 38-pin board, six BTS7960 H-bridge motor drivers, and six DC geared worm-rack actuator modules.
 
 ## System Topology
 
@@ -8,10 +8,12 @@ V3 uses six BTS7960 H-bridge motor drivers. Each module is a DC geared motor dri
 12V motor battery + -----> BTS7960 B+ pins
 12V motor battery - -----> BTS7960 B- pins ----+
                                                 |
-ESP32-C3 GND ----------------------------------+
+ESP32 DevKit GND ------------------------------+
 
-ESP32-C3 PWM pins -> BTS7960 RPWM/LPWM pins -> DC motors -> worm-rack actuators
-5V logic rail -----> BTS7960 VCC pins
+ESP32 PWM pins -> BTS7960 RPWM/LPWM pins -> DC motors -> worm-rack actuators
+3.3V logic rail -> BTS7960 VCC pins
+GPIO5 -----------> all BTS7960 R_EN + L_EN pins
+GPIO34 ----------> battery divider midpoint
 ```
 
 Use a common ground between ESP32 logic, BTS7960 logic, and motor battery ground.
@@ -28,25 +30,47 @@ ROW 3:  [LL - M4]       [LR - M5]    Lower lumbar / pelvis
 
 Keep a 2cm spine gap between the columns so modules press paraspinal muscles, not spinous processes.
 
-## ESP32-C3 Pin Assignment
+## ESP32 DevKit V1 Pin Assignment
 
-| GPIO | Function | Module |
-|---|---|---|
-| GPIO0 | RPWM | M0 Upper-Left |
-| GPIO1 | LPWM | M0 Upper-Left |
-| GPIO2 | RPWM | M1 Upper-Right |
-| GPIO3 | LPWM | M1 Upper-Right |
-| GPIO4 | RPWM | M2 Mid-Left |
-| GPIO5 | LPWM | M2 Mid-Left |
-| GPIO6 | RPWM | M3 Mid-Right |
-| GPIO7 | LPWM | M3 Mid-Right |
-| GPIO8 | RPWM | M4 Lower-Left |
-| GPIO9 | LPWM | M4 Lower-Left |
-| GPIO10 | RPWM | M5 Lower-Right |
-| GPIO20 | LPWM | M5 Lower-Right |
-| GPIO21 | Shared enable | All BTS7960 R_EN/L_EN |
+The pin map avoids GPIO0, GPIO2, GPIO12, and GPIO15 because they are boot-strapping pins. It also avoids GPIO6-GPIO11 because they are connected to onboard flash.
 
-For a hackathon build, you may tie all BTS7960 `R_EN` and `L_EN` pins HIGH. The firmware also supports the shared `EN_PIN` on GPIO21.
+| Module | RPWM GPIO | LPWM GPIO | BTS7960 LEDC channels |
+|---|---:|---:|---|
+| M0 Upper-Left | GPIO25 | GPIO26 | ch0, ch1 |
+| M1 Upper-Right | GPIO27 | GPIO16 | ch2, ch3 |
+| M2 Mid-Left | GPIO14 | GPIO13 | ch4, ch5 |
+| M3 Mid-Right | GPIO17 | GPIO18 | ch6, ch7 |
+| M4 Lower-Left | GPIO21 | GPIO22 | ch8, ch9 |
+| M5 Lower-Right | GPIO23 | GPIO19 | ch10, ch11 |
+
+| Shared Signal | ESP32 GPIO | Connect To |
+|---|---:|---|
+| Driver enable | GPIO5 | All BTS7960 `R_EN` and `L_EN` pins |
+| Battery ADC | GPIO34 | Voltage divider midpoint |
+| Common ground | GND | ESP32, BTS7960 logic, motor battery ground |
+| Logic power | 3.3V | BTS7960 VCC logic pins |
+| Motor power | External 12V | BTS7960 B+ and B- motor terminals |
+
+GPIO34 is input-only and works well for ADC sensing.
+
+## Battery Voltage Divider
+
+```text
+Battery + ---- R1 100k ----+---- GPIO34
+                           |
+                           R2 100k
+                           |
+Battery - / GND -----------+
+```
+
+Firmware constants:
+
+```cpp
+#define BATTERY_ADC_PIN 34
+#define BATTERY_ADC_MAX 4095
+#define BATTERY_REF_MV 3300
+#define BATTERY_DIVIDER 2.0f
+```
 
 ## BTS7960 Per-Driver Wiring
 
@@ -54,13 +78,24 @@ For a hackathon build, you may tie all BTS7960 `R_EN` and `L_EN` pins HIGH. The 
 |---|---|---|
 | RPWM | Assigned ESP32 GPIO | Forward PWM: rack extends, foam pushes out |
 | LPWM | Assigned ESP32 GPIO | Reverse PWM: rack retracts |
-| R_EN | GPIO21 or 5V | Enable right half-bridge |
-| L_EN | GPIO21 or 5V | Enable left half-bridge |
-| VCC | 5V logic | Driver logic power |
+| R_EN | GPIO5 | Enable right half-bridge |
+| L_EN | GPIO5 | Enable left half-bridge |
+| VCC | ESP32 3.3V | Driver logic power |
 | GND | Common GND | Shared reference |
-| B+ | 6-12V motor battery + | Motor rail |
+| B+ | 12V motor battery + | Motor rail |
 | B- | Motor battery GND | Motor rail ground |
 | M+ / M- | DC motor terminals | Output to motor |
+
+## Arduino IDE Target
+
+- Board: `ESP32 Dev Module`
+- CPU Frequency: `240MHz`
+- Upload Speed: `921600`
+- Flash Size: `4MB`
+- Partition Scheme: `Default 4MB with spiffs`
+- USB CDC On Boot: not applicable on DevKit V1
+
+If upload fails, hold the BOOT button while starting upload and release it after `Connecting...` appears.
 
 ## Position Model
 

@@ -6,10 +6,10 @@
 
 #define NUM_MODULES 6
 
-const uint8_t RPWM_PINS[NUM_MODULES] = {0, 2, 4, 6, 8, 10};
-const uint8_t LPWM_PINS[NUM_MODULES] = {1, 3, 5, 7, 9, 20};
+const uint8_t RPWM_PINS[NUM_MODULES] = {25, 27, 14, 17, 21, 23};
+const uint8_t LPWM_PINS[NUM_MODULES] = {26, 16, 13, 18, 22, 19};
 
-#define EN_PIN 21
+#define EN_PIN 5
 #define PWM_FREQ 5000
 #define PWM_RES 8
 #define TEST_PWM 200

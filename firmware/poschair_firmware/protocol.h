@@ -34,7 +34,7 @@ inline bool parseCommand(const uint8_t* data, size_t len, CommandPacket& out) {
 // Status packet (ESP32 -> app), 10 bytes:
 // [0] 0x5A
 // [1] flags: bit0=ok, bit1=failsafe, bit2=homed, bit3=any motor moving
-// [2..3] reserved
+// [2..3] battery voltage in millivolts, big-endian uint16
 // [4..9] current UL, UR, ML, MR, LL, LR positions, each 0-100mm
 #define STATUS_HEADER 0x5A
 #define STATUS_PACKET_SIZE 10

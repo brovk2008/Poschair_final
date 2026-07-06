@@ -1,6 +1,6 @@
 # PosChair BLE Protocol Specification (V3)
 
-This document defines the binary BLE protocol between the browser app and the ESP32-C3 motor controller.
+This document defines the binary BLE protocol between the browser app and the ESP32 DevKit V1 motor controller.
 
 ## Device Information
 
@@ -49,8 +49,8 @@ ESP32 to app, 10 bytes, notify about once per second.
 |---|---|---|---|
 | 0 | Header | `uint8_t` | Constant `0x5A` |
 | 1 | Flags | `uint8_t` | bit0=ok, bit1=failsafe, bit2=homed, bit3=any motor moving |
-| 2 | Reserved | `uint8_t` | `0x00` |
-| 3 | Reserved | `uint8_t` | `0x00` |
+| 2 | Battery voltage MSB | `uint8_t` | Big-endian millivolts |
+| 3 | Battery voltage LSB | `uint8_t` | Big-endian millivolts |
 | 4 | UL current position | `uint8_t` | 0-100mm |
 | 5 | UR current position | `uint8_t` | 0-100mm |
 | 6 | ML current position | `uint8_t` | 0-100mm |

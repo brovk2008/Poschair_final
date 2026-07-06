@@ -5,12 +5,22 @@
 // 0=Upper-Left, 1=Upper-Right, 2=Mid-Left, 3=Mid-Right, 4=Lower-Left, 5=Lower-Right
 #define NUM_MODULES 6
 
-// BTS7960 pins. RPWM drives rack out, LPWM drives rack in.
-const uint8_t RPWM_PINS[NUM_MODULES] = {0, 2, 4, 6, 8, 10};
-const uint8_t LPWM_PINS[NUM_MODULES] = {1, 3, 5, 7, 9, 20};
+// BTS7960 PWM pin assignments for ESP32 DevKit V1 (38-pin).
+// Avoid GPIO0, GPIO2, GPIO12, and GPIO15 because they are boot-strapping pins.
+// Avoid GPIO6-GPIO11 because they are connected to the onboard flash chip.
+// RPWM drives rack out, LPWM drives rack in.
+const uint8_t RPWM_PINS[NUM_MODULES] = {25, 27, 14, 17, 21, 23};
+const uint8_t LPWM_PINS[NUM_MODULES] = {26, 16, 13, 18, 22, 19};
 
-#define EN_PIN 21
-#define LIMIT_SW_PINS_USED false
+// Shared enable pin. Tie all BTS7960 R_EN and L_EN pins here, HIGH = enabled.
+#define EN_PIN 5
+
+// Battery voltage divider input. GPIO34 is input-only and ADC1_CH6.
+// Wiring: Battery+ -> R1 100k -> GPIO34 -> R2 100k -> GND.
+#define BATTERY_ADC_PIN 34
+#define BATTERY_ADC_MAX 4095
+#define BATTERY_REF_MV 3300
+#define BATTERY_DIVIDER 2.0f
 
 // Motor PWM settings for ESP32 Arduino core v3 ledcAttach/ledcWrite API.
 #define MOTOR_PWM_NORMAL 200

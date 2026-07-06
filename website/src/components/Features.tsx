@@ -11,7 +11,7 @@ const features = [
   },
   {
     title: "Zero-latency BLE Connection",
-    desc: "Communicates using standard Web Bluetooth API writing packed 8-byte position payloads directly to the ESP32-C3 microcontroller."
+    desc: "Communicates using standard Web Bluetooth API writing packed 8-byte position payloads directly to the ESP32 DevKit controller."
   },
   {
     title: "Automatic Failsafe Watchdog",

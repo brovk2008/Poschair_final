@@ -67,7 +67,7 @@ bool BLEManager::isConnected() const {
   return _server && _server->getConnectedCount() > 0;
 }
 
-void BLEManager::sendStatus(bool failsafeActive) {
+void BLEManager::sendStatus(bool failsafeActive, uint16_t batteryMv) {
   if (!_statusChar || !_controller) return;
 
   uint8_t flags = 0x01;
@@ -78,8 +78,8 @@ void BLEManager::sendStatus(bool failsafeActive) {
   uint8_t payload[STATUS_PACKET_SIZE] = {0};
   payload[0] = STATUS_HEADER;
   payload[1] = flags;
-  payload[2] = 0x00;
-  payload[3] = 0x00;
+  payload[2] = (batteryMv >> 8) & 0xFF;
+  payload[3] = batteryMv & 0xFF;
   for (int i = 0; i < NUM_MODULES; i++) {
     payload[4 + i] = _controller->getCurrentPosition(i);
   }

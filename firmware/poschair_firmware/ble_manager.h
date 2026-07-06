@@ -7,7 +7,7 @@
 class BLEManager {
 public:
   void begin(MotorController* controller);
-  void sendStatus(bool failsafeActive);
+  void sendStatus(bool failsafeActive, uint16_t batteryMv = 0);
   unsigned long lastValidPacketMs() const { return _lastPacketMs; }
   bool isConnected() const;
 

@@ -15,7 +15,7 @@ flowchart LR
   Decision["V3 Decision Engine"]
   BLEClient["Web Bluetooth Manager"]
   BLEAir["BLE radio link"]
-  ESP32["ESP32-C3 firmware"]
+  ESP32["ESP32 DevKit V1 firmware"]
   MotorCtrl["MotorController timed-position model"]
   Drivers["6x BTS7960 H-bridge drivers"]
   Motors["6x DC geared motors"]
@@ -66,6 +66,7 @@ flowchart TB
     Calibration["Calibration baseline"]
     ManualOverride["Manual position sliders"]
     BLEStatusIn["ESP32 status notifications"]
+    BatterySense["Battery voltage divider on GPIO34"]
     MotorSpeedCal["MOTOR_SPEED_MM_PER_MS calibration"]
     PowerOn["Power-on / reset"]
     BLEDisconnect["BLE disconnect or silent packets"]
@@ -79,6 +80,7 @@ flowchart TB
     PositionMapping["0-100mm target mapping"]
     PacketBuild["8-byte BLE command packet"]
     PacketParse["ESP32 checksum validation"]
+    BatteryRead["Battery ADC reading"]
     TimedMotion["Timed motor run duration"]
     Homing["Startup homing to 0mm"]
     Failsafe["2-second BLE failsafe"]
@@ -109,6 +111,8 @@ flowchart TB
   BLEPacket --> PacketParse
   PacketParse --> TimedMotion
   MotorSpeedCal --> TimedMotion
+  BatterySense --> BatteryRead
+  BatteryRead --> Dashboard
   TimedMotion --> PWMOut
   PWMOut --> MotorMotion
   MotorMotion --> PadTravel
@@ -214,7 +218,7 @@ flowchart LR
 sequenceDiagram
   participant App as Browser App
   participant BLE as Web Bluetooth
-  participant ESP as ESP32-C3 NimBLE
+  participant ESP as ESP32 DevKit NimBLE
   participant FW as Firmware Parser
   participant MC as MotorController
   participant UI as Dashboard UI
@@ -233,7 +237,7 @@ sequenceDiagram
     FW-->>ESP: Drop packet
   end
   ESP->>ESP: Every 1000ms build status
-  Note over ESP: 5A flags 00 00 UL UR ML MR LL LR
+  Note over ESP: 5A flags battery_mV UL UR ML MR LL LR
   ESP->>BLE: notify(status)
   BLE->>App: characteristicvaluechanged
   App->>UI: Update homed, moving, failsafe, actual positions
@@ -429,7 +433,8 @@ flowchart LR
 | `velocitySpine` | Posture analyzer | Decision engine / UI | Degrees per second |
 | `confidence` | Pose landmarks | Decision engine / UI | 0.0-1.0 |
 | Target positions | Decision engine | BLE manager | 6 values, 0-100mm |
-| Command packet | BLE manager | ESP32-C3 | 8 bytes |
-| Current positions | ESP32-C3 | Dashboard UI | 6 values, 0-100mm |
-| Motor PWM | ESP32-C3 | BTS7960 drivers | 0-255 duty |
+| Command packet | BLE manager | ESP32 DevKit V1 | 8 bytes |
+| Battery voltage | ESP32 DevKit V1 ADC | Dashboard status packet | Millivolts |
+| Current positions | ESP32 DevKit V1 | Dashboard UI | 6 values, 0-100mm |
+| Motor PWM | ESP32 DevKit V1 | BTS7960 drivers | 0-255 duty |
 | Foam pad travel | Worm-rack actuator | User back | 0-100mm |

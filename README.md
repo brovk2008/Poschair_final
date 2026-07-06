@@ -6,7 +6,7 @@ AI-assisted posture correction hardware for chairs, built around a browser visio
 [![License: MIT](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
 [![Website](https://img.shields.io/badge/website-poschair--comfort.vercel.app-gray)](https://poschair-comfort.vercel.app)
 
-PosChair tracks posture locally with MediaPipe Pose, converts posture deviation into six linear actuator targets, and sends those commands to an ESP32-C3 over Bluetooth Low Energy. The v3 hardware uses DC geared motors, BTS7960 H-bridge drivers, and custom worm-rack actuators that move foam pads up to 100mm.
+PosChair tracks posture locally with MediaPipe Pose, converts posture deviation into six linear actuator targets, and sends those commands to an ESP32 DevKit V1 over Bluetooth Low Energy. The v3 hardware uses DC geared motors, BTS7960 H-bridge drivers, and custom worm-rack actuators that move foam pads up to 100mm.
 
 ## Current Version
 
@@ -14,7 +14,7 @@ PosChair tracks posture locally with MediaPipe Pose, converts posture deviation 
 
 - 6 custom worm-rack actuators in a 2x3 paraspinal grid
 - 6 BTS7960 H-bridge motor drivers
-- ESP32-C3 BLE peripheral using NimBLE-Arduino
+- ESP32 DevKit V1 BLE peripheral using NimBLE-Arduino
 - Web Bluetooth dashboard for Chrome/Edge
 - Local-only camera posture analysis with MediaPipe WASM
 - FastAPI backend for profile, calibration, and session history
@@ -27,7 +27,7 @@ Camera
   -> Posture analyzer
   -> Velocity-aware decision engine
   -> Web Bluetooth command packet
-  -> ESP32-C3
+  -> ESP32 DevKit V1
   -> 6x BTS7960 H-bridges
   -> DC geared motors
   -> Worm-rack actuators
@@ -60,7 +60,7 @@ The center spine line is intentionally left open. The modules press into paraspi
 
 ```text
 firmware/
-  poschair_firmware/      Main ESP32-C3 BLE + motor control firmware
+  poschair_firmware/      Main ESP32 DevKit BLE + motor control firmware
   poschair_motor_test/    Motor calibration and wiring test sketch
 
 app/
@@ -69,7 +69,7 @@ app/
   docker-compose.yml      Local full-stack development environment
 
 docs/
-  hardware_wiring.md      BTS7960, ESP32-C3, and actuator wiring reference
+  hardware_wiring.md      BTS7960, ESP32 DevKit, and actuator wiring reference
   protocol.md             BLE packet protocol reference
 
 website/                  Public Next.js marketing/documentation site
@@ -79,7 +79,7 @@ website/                  Public Next.js marketing/documentation site
 
 ### 1. Wire the Hardware
 
-Connect each BTS7960 driver to the ESP32-C3 using the pin map in [docs/hardware_wiring.md](docs/hardware_wiring.md). Use a separate motor power rail sized for your motors and keep all grounds common.
+Connect each BTS7960 driver to the ESP32 DevKit V1 using the pin map in [docs/hardware_wiring.md](docs/hardware_wiring.md). Use a separate motor power rail sized for your motors and keep all grounds common.
 
 Do not power the DC motors from the ESP32 or USB.
 
@@ -113,10 +113,9 @@ firmware/poschair_firmware/poschair_firmware.ino
 
 Recommended Arduino settings:
 
-- Board: `ESP32C3 Dev Module`
-- USB CDC On Boot: `Enabled`
+- Board: `ESP32 Dev Module`
 - Flash Size: `4MB`
-- CPU Frequency: `160MHz`
+- CPU Frequency: `240MHz`
 - Library: `NimBLE-Arduino`
 
 ### 4. Run the App
@@ -156,8 +155,8 @@ Status packet, ESP32 to app:
 ```text
 [0]   0x5A
 [1]   flags: bit0=ok, bit1=failsafe, bit2=homed, bit3=moving
-[2]   reserved
-[3]   reserved
+[2]   battery mV high byte
+[3]   battery mV low byte
 [4-9] current module positions, UL through LR
 ```
 
@@ -194,4 +193,4 @@ The firmware clamps commanded travel to 100mm and retracts on BLE timeout, but m
 
 ## Status
 
-V3 implementation is active. The app and website builds pass locally. Firmware should be compiled and flashed through Arduino IDE after installing NimBLE-Arduino and selecting the ESP32-C3 board package.
+V3 implementation is active on ESP32 DevKit V1. The app and website builds pass locally. Firmware should be compiled and flashed through Arduino IDE after installing NimBLE-Arduino and selecting the ESP32 board package.
