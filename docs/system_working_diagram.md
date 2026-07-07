@@ -56,6 +56,110 @@ flowchart LR
   Backend --> UI
 ```
 
+## 1A. Physical Wiring Connection Diagram
+
+```mermaid
+flowchart LR
+  ESP["ESP32 DevKit V1"]
+  GND["Common ground bus"]
+  V33["ESP32 3.3V"]
+  EN["GPIO5 shared enable"]
+  ADC["GPIO34 battery ADC"]
+  BATP["12V battery positive"]
+  BATN["12V battery negative"]
+  Fuse["Fuse / switch"]
+  Divider["100k / 100k voltage divider"]
+
+  subgraph Drivers["BTS7960 drivers"]
+    D0["M0 UL driver"]
+    D1["M1 UR driver"]
+    D2["M2 ML driver"]
+    D3["M3 MR driver"]
+    D4["M4 LL driver"]
+    D5["M5 LR driver"]
+  end
+
+  subgraph Motors["DC motors and actuators"]
+    M0["M0 upper-left motor"]
+    M1["M1 upper-right motor"]
+    M2["M2 mid-left motor"]
+    M3["M3 mid-right motor"]
+    M4["M4 lower-left motor"]
+    M5["M5 lower-right motor"]
+  end
+
+  ESP -->|"GPIO25 RPWM, GPIO26 LPWM"| D0
+  ESP -->|"GPIO27 RPWM, GPIO16 LPWM"| D1
+  ESP -->|"GPIO14 RPWM, GPIO13 LPWM"| D2
+  ESP -->|"GPIO17 RPWM, GPIO18 LPWM"| D3
+  ESP -->|"GPIO21 RPWM, GPIO22 LPWM"| D4
+  ESP -->|"GPIO23 RPWM, GPIO19 LPWM"| D5
+
+  EN -->|"R_EN + L_EN"| D0
+  EN -->|"R_EN + L_EN"| D1
+  EN -->|"R_EN + L_EN"| D2
+  EN -->|"R_EN + L_EN"| D3
+  EN -->|"R_EN + L_EN"| D4
+  EN -->|"R_EN + L_EN"| D5
+
+  V33 -->|"VCC logic"| D0
+  V33 -->|"VCC logic"| D1
+  V33 -->|"VCC logic"| D2
+  V33 -->|"VCC logic"| D3
+  V33 -->|"VCC logic"| D4
+  V33 -->|"VCC logic"| D5
+
+  BATP --> Fuse
+  Fuse -->|"B+"| D0
+  Fuse -->|"B+"| D1
+  Fuse -->|"B+"| D2
+  Fuse -->|"B+"| D3
+  Fuse -->|"B+"| D4
+  Fuse -->|"B+"| D5
+
+  BATN --> GND
+  ESP -->|"GND"| GND
+  GND -->|"GND and B-"| D0
+  GND -->|"GND and B-"| D1
+  GND -->|"GND and B-"| D2
+  GND -->|"GND and B-"| D3
+  GND -->|"GND and B-"| D4
+  GND -->|"GND and B-"| D5
+
+  D0 -->|"M+ / M-"| M0
+  D1 -->|"M+ / M-"| M1
+  D2 -->|"M+ / M-"| M2
+  D3 -->|"M+ / M-"| M3
+  D4 -->|"M+ / M-"| M4
+  D5 -->|"M+ / M-"| M5
+
+  BATP --> Divider
+  GND --> Divider
+  Divider --> ADC
+```
+
+## 1B. One Driver Wiring Template
+
+```mermaid
+flowchart TB
+  ESP["ESP32 DevKit"]
+  Driver["One BTS7960 driver"]
+  Motor["One DC geared motor"]
+  Battery["12V motor supply"]
+  Ground["Common ground"]
+
+  ESP -->|"Assigned RPWM GPIO"| Driver
+  ESP -->|"Assigned LPWM GPIO"| Driver
+  ESP -->|"GPIO5 to R_EN"| Driver
+  ESP -->|"GPIO5 to L_EN"| Driver
+  ESP -->|"3.3V to VCC"| Driver
+  ESP -->|"GND"| Ground
+  Ground -->|"GND and B-"| Driver
+  Battery -->|"B+"| Driver
+  Driver -->|"M+"| Motor
+  Driver -->|"M-"| Motor
+```
+
 ## 2. Inputs and Outputs
 
 ```mermaid
